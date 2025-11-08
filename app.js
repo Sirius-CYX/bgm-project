@@ -2,7 +2,6 @@
 const audioUpload = document.getElementById("audioUpload");
 const playButton = document.getElementById("play");
 const stopButton = document.getElementById("stop");
-const downloadButton = document.getElementById("download");
 const statusText = document.getElementById("status");
 const reverbButton = document.getElementById("reverb");
 const delayButton = document.getElementById("delay");
@@ -17,8 +16,6 @@ if (Tone.context.state !== "running") {
 let audioBuffer = null;        // 上传的音频缓冲区
 let player = null;             // Tone.Player实例
 let isPlaying = false;         // 播放状态
-let recorder = null;           // 录音器（用于下载）
-let chunks = [];              // 录音数据块
 
 // 效果链系统
 let effectChain = null;        // 效果链节点
@@ -77,9 +74,6 @@ playButton.addEventListener("click", () => {
     isPlaying = true;
     statusText.textContent = "正在播放...";
     playButton.textContent = "暂停";
-    
-    // 开始录制效果音频
-    startRecordingEffect();
   } else {
     player.stop();
     isPlaying = false;
@@ -198,46 +192,3 @@ clearButton.addEventListener("click", () => {
   console.log("清除所有效果");
 });
 
-downloadButton.addEventListener("click", () => {
-  recorder.stop();
-
-  recorder.onstop = () => {
-    const audioBlob = new Blob(chunks, { type: "audio/wav" });
-    const audioUrl = URL.createObjectURL(audioBlob);
-    const link = document.createElement("a");
-    link.href = audioUrl;
-    link.setAttribute("download", "recording.wav");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    chunks = [];
-  };
-});
-
-// 开始录制带效果的音频
-const startRecordingEffect = async () => {
-  try {
-    // 创建媒体流目标
-    const destination = Tone.context.createMediaStreamDestination();
-    
-    // 将主输出连接到录制目标
-    Tone.Master.connect(destination);
-    
-    // 创建MediaRecorder
-    recorder = new MediaRecorder(destination.stream);
-    
-    // 处理录制数据
-    recorder.ondataavailable = (event) => {
-      if (event.data.size > 0) {
-        chunks.push(event.data);
-      }
-    };
-    
-    // 开始录制
-    recorder.start();
-    console.log("开始录制带效果的音频");
-    
-  } catch (error) {
-    console.error("录制失败:", error);
-  }
-};
