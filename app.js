@@ -119,7 +119,7 @@ function initializeEffectChain() {
   });
   
   // 创建效果链：播放器 → 效果链 → 输出
-  effectChain = new Tone.Gain(1);
+  effectChain = new Tone.Gain(0.85);
   player.connect(effectChain);
   effectChain.toDestination();
   
