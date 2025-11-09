@@ -18,8 +18,8 @@ let player = null;             // Tone.Player实例
 let isPlaying = false;         // 播放状态
 
 // 效果链系统
-let effectChain = null;        // 效果链节点
-let currentEffect = null;      // 当前激活的效果
+let effectChain = null;        // 效果链路由节点（Gain节点，用于音量控制和路由管理）
+let currentEffect = null;      // 当前激活的效果节点
 let effectNodes = {            // 所有效果节点
   reverb: null,
   delay: null,
@@ -94,31 +94,42 @@ stopButton.addEventListener("click", () => {
 
 // 初始化效果链系统
 function initializeEffectChain() {
+  // 如果之前已经初始化过，先清理旧的连接和效果节点
+  if (effectChain) {
+    effectChain.disconnect();
+  }
+  if (currentEffect) {
+    currentEffect.disconnect();
+    currentEffect = null;
+  }
+  
   // 创建所有效果节点
   effectNodes.reverb = new Tone.JCReverb({
-    roomSize: 0.8,
-    wet: 0.5,
+    roomSize: 0.3,//空间大小
+    wet: 0.2,
   });
   
   effectNodes.delay = new Tone.FeedbackDelay({
-    delayTime: "8n",
-    feedback: 0.6,
-    wet: 0.5,
+    delayTime: "8n",//延迟时间（8音符的话回声和原声对齐）
+    feedback: 0.2,//回声重复多少次
+    wet: 0.3,
   });
   
   effectNodes.chorus = new Tone.Chorus({
-    frequency: 10,
+    frequency: 10,//摇摆频率
     delayTime: 0.1,
     depth: 0.9,
-    spread: 180,
+    spread: 180,//立体声扩散
   });
   
   effectNodes.distortion = new Tone.Distortion({
-    distortion: 0.8,
-    saturate: 0.5,
+    distortion: 0.4,//失真量
+    //saturate: 0.5,
+    wet: 0.25,
   });
   
-  // 创建效果链：播放器 → 效果链 → 输出
+  // 创建效果链路由节点：播放器 → effectChain(Gain) → 输出（初始为 dry 路径）
+  // Gain 值设为 0.85 以防止数字削波失真（避免音频信号超过 0dB 导致削波）
   effectChain = new Tone.Gain(0.85);
   player.connect(effectChain);
   effectChain.toDestination();
@@ -140,12 +151,15 @@ function switchEffect(effectType) {
     return;
   }
   
-  // 如果当前已经有效果，先断开
+  // 断开 effectChain 的所有输出连接，避免多条路径并存导致相位抵消和失真
+  effectChain.disconnect();
+  
+  // 如果当前已经有效果，也断开其连接（确保清理）
   if (currentEffect) {
     currentEffect.disconnect();
   }
   
-  // 连接新效果到效果链
+  // 连接新效果：effectChain(Gain) -> 效果 -> Destination（单一路径，避免相位抵消）
   effectChain.connect(targetEffect);
   targetEffect.toDestination();
   currentEffect = targetEffect;
@@ -179,13 +193,16 @@ clearButton.addEventListener("click", () => {
     return;
   }
   
-  // 断开当前效果
+  // 断开 effectChain 的所有输出连接，确保清理所有路径
+  effectChain.disconnect();
+  
+  // 断开当前效果的连接（确保清理）
   if (currentEffect) {
     currentEffect.disconnect();
     currentEffect = null;
   }
   
-  // 直接连接到输出
+  // 重新连接到输出（dry 路径，无效果，音量由 effectChain 的 Gain 值 0.85 控制）
   effectChain.toDestination();
   
   statusText.textContent = "已清除所有效果，播放原始音频";
