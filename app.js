@@ -41,6 +41,14 @@ audioUpload.addEventListener("change", async (event) => {
   try {
     statusText.textContent = "正在加载音乐文件...";
     
+    // *** 清理旧播放器和 Transport ***
+    if (player) {
+      player.unsync(); // 解除同步
+      player.dispose(); // 销毁旧实例
+    }
+    // 确保 Transport 停止并重置，为新歌做准备
+    Tone.Transport.stop();
+    
     // 读取文件为ArrayBuffer
     const arrayBuffer = await file.arrayBuffer();
     
@@ -50,11 +58,19 @@ audioUpload.addEventListener("change", async (event) => {
     // 创建播放器
     player = new Tone.Player(audioBuffer);
     
-    // 初始化效果链系统
+    // *** 同步 Transport 并准备播放 ***
+    // 告诉 player 在 Transport 的 0 秒钟位置准备好
+    player.sync().start(0);
+    
+    // 初始化效果链系统（会在内部连接 player 到 effectChain）
     initializeEffectChain();
     
     statusText.textContent = `音乐加载成功！文件：${file.name}`;
     console.log("音乐文件加载完成，可以播放和添加效果了");
+    
+    // *** 重置播放按钮状态 ***
+    isPlaying = false;
+    playButton.textContent = "播放";
     
   } catch (error) {
     console.error("音频加载失败:", error);
@@ -62,33 +78,40 @@ audioUpload.addEventListener("change", async (event) => {
   }
 });
 
-// 播放控制
+// 播放控制 (已修复为"暂停/继续")
 playButton.addEventListener("click", () => {
   if (!player) {
     statusText.textContent = "请先上传音乐文件";
     return;
   }
   
-  if (!isPlaying) {
-    player.start();
-    isPlaying = true;
-    statusText.textContent = "正在播放...";
-    playButton.textContent = "暂停";
-  } else {
-    player.stop();
-    isPlaying = false;
+  // 检查"主时钟"的状态
+  if (Tone.Transport.state === "started") {
+    // 如果正在播放，就"暂停"
+    Tone.Transport.pause();
+    
     statusText.textContent = "已暂停";
     playButton.textContent = "播放";
+    isPlaying = false;
+  } else {
+    // 如果是"已停止"或"已暂停"，就"开始/继续"
+    Tone.Transport.start();
+    
+    statusText.textContent = "正在播放...";
+    playButton.textContent = "暂停";
+    isPlaying = true;
   }
 });
 
-// 停止播放
+// 停止播放 (重置)
 stopButton.addEventListener("click", () => {
-  if (player && isPlaying) {
-    player.stop();
-    isPlaying = false;
+  if (player) {
+    // .stop() 会停止播放并重置 Transport 的时间到 0
+    Tone.Transport.stop();
+    
     statusText.textContent = "已停止";
-    playButton.textContent = "播放";
+    playButton.textContent = "播放"; // 重置播放按钮的状态
+    isPlaying = false;
   }
 });
 
