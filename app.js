@@ -177,9 +177,9 @@ function initializeEffectChain() {
 
   // 自动声相器（AutoPanner）：在左右声道间摆动
   effectNodes.autoPanner = new Tone.AutoPanner({
-    frequency: "1m",//以四分音符速度左右摆动
+    frequency: "4m",//以四分音符速度左右摆动
     depth: 0.8,//摆动幅度 80%
-    wet: 1.0,//声相效果建议保持 100%
+    wet: 0.6,//声相效果建议保持 100%
   }).start();//需要启动内部 LFO
 
   // 比特压碎器（BitCrusher）：制造低保真数字失真
