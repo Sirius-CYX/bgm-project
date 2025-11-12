@@ -7,6 +7,10 @@ const reverbButton = document.getElementById("reverb");
 const delayButton = document.getElementById("delay");
 const chorusButton = document.getElementById("chorus");
 const distortionButton = document.getElementById("distortion");
+const phaserButton = document.getElementById("phaser");
+const autoWahButton = document.getElementById("autoWah");
+const autoPannerButton = document.getElementById("autoPanner");
+const bitCrusherButton = document.getElementById("bitCrusher");
 const clearButton = document.getElementById("clear");
 
 if (Tone.context.state !== "running") {
@@ -24,7 +28,11 @@ let effectNodes = {            // 所有效果节点
   reverb: null,
   delay: null,
   chorus: null,
-  distortion: null
+  distortion: null,
+  phaser: null,
+  autoWah: null,
+  autoPanner: null,
+  bitCrusher: null
 };
 
 document.addEventListener("click", () => {
@@ -150,6 +158,35 @@ function initializeEffectChain() {
     //saturate: 0.5,
     wet: 0.25,
   });
+
+  // 相位器（Phaser）：营造旋涡感的扫频声
+  effectNodes.phaser = new Tone.Phaser({
+    frequency: 0.5,//扫频速度较慢
+    octaves: 3,//扫频深度
+    baseFrequency: 350,
+    wet: 0.4,//混合度 40%
+  });
+
+  // 自动哇音（AutoWah）：模拟哇踏板的人声效果
+  effectNodes.autoWah = new Tone.AutoWah({
+    baseFrequency: 100,//哇音起始频率
+    octaves: 6,//滤波开启范围
+    Q: 2,//Q值控制尖锐程度
+    wet: 0.5,//混合度 50%
+  });
+
+  // 自动声相器（AutoPanner）：在左右声道间摆动
+  effectNodes.autoPanner = new Tone.AutoPanner({
+    frequency: "1m",//以四分音符速度左右摆动
+    depth: 0.8,//摆动幅度 80%
+    wet: 1.0,//声相效果建议保持 100%
+  }).start();//需要启动内部 LFO
+
+  // 比特压碎器（BitCrusher）：制造低保真数字失真
+  effectNodes.bitCrusher = new Tone.BitCrusher({
+    bits: 4,//4-bit 颗粒感
+    wet: 0.2,//混合度 30%
+  });
   
   // 创建效果链路由节点：播放器 → effectChain(Gain) → 输出（初始为 dry 路径）
   // Gain 值设为 0.85 以防止数字削波失真（避免音频信号超过 0dB 导致削波）
@@ -209,8 +246,24 @@ delayButton.addEventListener("click", () => {
   switchEffect("delay");
 });
 
-// 清除效果按钮
-clearButton.addEventListener("click", () => {
+phaserButton.addEventListener("click", () => {
+  switchEffect("phaser");
+});
+
+autoWahButton.addEventListener("click", () => {
+  switchEffect("autoWah");
+});
+
+autoPannerButton.addEventListener("click", () => {
+  switchEffect("autoPanner");
+});
+
+bitCrusherButton.addEventListener("click", () => {
+  switchEffect("bitCrusher");
+});
+ 
+ // 清除效果按钮
+ clearButton.addEventListener("click", () => {
   if (!player || !effectChain) {
     statusText.textContent = "请先上传音乐文件";
     return;
