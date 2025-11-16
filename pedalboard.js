@@ -40,6 +40,7 @@ const MusicFXModule = (function() {
   
   let _player = null;
   let _masterGain = null;
+  let _limiter = null;
   
   // --- 内部私有函数 ---
   
@@ -79,7 +80,10 @@ const MusicFXModule = (function() {
     });
     // JCReverb 是同步的，不需要等待异步生成
     
-    console.log("MusicFXModule: 节点初始化完毕。");
+    // 5. Limiter (限制器) - 防止效果链叠加后音量暴增的"安全网"
+    _limiter = new Tone.Limiter(-0.1);  // 阈值设为 -0.1dB 作为安全余量
+    
+    console.log("MusicFXModule: 节点 (带 Limiter) 初始化完毕。");
   }
   
   // --- 模块公开接口 (API) ---
@@ -103,12 +107,13 @@ const MusicFXModule = (function() {
       // 断开 masterGain 的旧连接（如果有）
       _masterGain.disconnect();
       
-      // 链接！ Player -> MasterGain -> [效果链] -> Destination
+      // 链接！ Player -> MasterGain -> [效果链] -> Limiter -> Destination
+      _limiter.toDestination();
       _player.connect(_masterGain);
-      _masterGain.chain(...nodesInChain, Tone.Destination);
+      _masterGain.chain(...nodesInChain, _limiter);
       
-      console.log("MusicFXModule: 效果链已成功连接！");
-      console.log("效果链顺序:", _effectOrder.join(" -> "));
+      console.log("MusicFXModule: 效果链已成功连接！ (已安装 Limiter)");
+      console.log("效果链顺序:", _effectOrder.join(" -> ") + " -> Limiter");
     },
     
     /**
@@ -220,7 +225,7 @@ audioUpload.addEventListener("change", async (event) => {
     player = new Tone.Player(audioBuffer);
     
     // 创建主增益，用于防止数字削波
-    masterGain = new Tone.Gain(0.85);
+    masterGain = new Tone.Gain(0.8);
     
     // 将播放器同步到 Transport
     player.sync().start(0);
