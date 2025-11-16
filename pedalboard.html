@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Step 1: FX Chain Prototype</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+      background-color: #1a1a1a;
+      color: #fff;
+    }
+    h2, h3 {
+      color: #4ecdc4;
+    }
+    button {
+      padding: 10px 20px;
+      margin: 5px;
+      background-color: #333;
+      color: #fff;
+      border: 1px solid #555;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #444;
+    }
+    input[type="file"] {
+      margin: 10px 0;
+      color: #fff;
+    }
+    hr {
+      border-color: #555;
+      margin: 20px 0;
+    }
+    #status {
+      color: #4ecdc4;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h2>Step 1: 静态效果链原型</h2>
+  <p>加载音乐，然后使用"测试"按钮或F12控制台来操控效果。</p>
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+  <script src="pedalboard.js" defer></script>
+  <hr>
+  
+  <h3>播放器</h3>
+  <input type="file" id="audioUpload" accept="audio/*">
+  <button id="play">播放 / 暂停</button>
+  <button id="stop">停止 (重置)</button>
+  <p><span id="status">请上传音乐文件...</span></p>
+  <hr>
+  
+  <h3>API 测试</h3>
+  
+  <h4>Distortion (失真)</h4>
+  <button id="test-dist-on">打开 Distortion (wet: 0.5)</button>
+  <button id="test-dist-off">关闭 Distortion</button>
+  
+  <h4>Chorus (合唱)</h4>
+  <button id="test-chorus-on">打开 Chorus (wet: 0.5)</button>
+  <button id="test-chorus-off">关闭 Chorus</button>
+  
+  <h4>Delay (延迟)</h4>
+  <button id="test-delay-on">打开 Delay (wet: 0.4)</button>
+  <button id="test-delay-off">关闭 Delay</button>
+  
+  <h4>Reverb (混响)</h4>
+  <button id="test-reverb-on">打开 Reverb (wet: 0.3)</button>
+  <button id="test-reverb-off">关闭 Reverb</button>
+  
+  <hr>
+  <button id="test-all-off">关闭所有效果</button>
+  <button id="test-log-state">打印当前状态到控制台</button>
+</body>
+</html>
+
