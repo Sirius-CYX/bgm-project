@@ -49,7 +49,6 @@ const MusicFXModule = (function() {
    * 全部默认 wet: 0 (关闭)
    */
   function _initializeNodes() {
-    console.log("MusicFXModule: 正在初始化 4 个原型节点...");
     
     // 1. Distortion (失真)
     _allEffects.distortion = new Tone.Distortion({ 
@@ -83,7 +82,6 @@ const MusicFXModule = (function() {
     // 5. Limiter (限制器) - 防止效果链叠加后音量暴增的"安全网"
     _limiter = new Tone.Limiter(-0.1);  // 阈值设为 -0.1dB 作为安全余量
     
-    console.log("MusicFXModule: 节点 (带 Limiter) 初始化完毕。");
   }
   
   // --- 模块公开接口 (API) ---
@@ -111,9 +109,6 @@ const MusicFXModule = (function() {
       _limiter.toDestination();
       _player.connect(_masterGain);
       _masterGain.chain(...nodesInChain, _limiter);
-      
-      console.log("MusicFXModule: 效果链已成功连接！ (已安装 Limiter)");
-      console.log("效果链顺序:", _effectOrder.join(" -> ") + " -> Limiter");
     },
     
     /**
@@ -122,80 +117,9 @@ const MusicFXModule = (function() {
      */
     getEffect: function(effectName) {
       if (!_allEffects[effectName]) {
-        console.warn(`未找到名为 ${effectName} 的效果器`);
         return null;
       }
       return _allEffects[effectName];
-    },
-    
-    /**
-     * API 3: 【测试】打印当前状态
-     * 供你调试使用
-     */
-    logCurrentState: function() {
-      console.log("--- 音乐效果器当前状态 ---");
-      let hasActiveEffect = false;
-      
-      for (const name of _effectOrder) {
-        const effect = _allEffects[name];
-        if (!effect) continue;
-        
-        // 检查效果器的 wet 值
-        if (effect.wet && effect.wet.value > 0) {
-          hasActiveEffect = true;
-          let params = [`wet: ${effect.wet.value.toFixed(2)}`];
-          
-          // 添加效果器特定的参数
-          if (name === "distortion" && effect.distortion) {
-            params.push(`distortion: ${effect.distortion.toFixed(2)}`);
-          }
-          if (name === "reverb" && effect.roomSize) {
-            params.push(`roomSize: ${effect.roomSize.value.toFixed(2)}`);
-          }
-          if (name === "chorus") {
-            if (effect.depth) {
-              const depthValue = typeof effect.depth === 'object' && effect.depth.value !== undefined 
-                ? effect.depth.value 
-                : effect.depth;
-              params.push(`depth: ${depthValue.toFixed(2)}`);
-            }
-            if (effect.frequency) {
-              const freqValue = typeof effect.frequency === 'object' && effect.frequency.value !== undefined 
-                ? effect.frequency.value 
-                : effect.frequency;
-              params.push(`frequency: ${freqValue.toFixed(2)}Hz`);
-            }
-            if (effect.delayTime) {
-              const delayTimeValue = typeof effect.delayTime === 'object' && effect.delayTime.value !== undefined 
-                ? effect.delayTime.value 
-                : effect.delayTime;
-              params.push(`delayTime: ${delayTimeValue.toFixed(3)}`);
-            }
-            if (effect.spread) {
-              const spreadValue = typeof effect.spread === 'object' && effect.spread.value !== undefined 
-                ? effect.spread.value 
-                : effect.spread;
-              params.push(`spread: ${spreadValue.toFixed(2)}`);
-            }
-          }
-          if (name === "delay") {
-            if (effect.delayTime) {
-              const delayTime = typeof effect.delayTime.value === 'string' 
-                ? effect.delayTime.value 
-                : effect.delayTime.value.toFixed(3) + 's';
-              params.push(`delayTime: ${delayTime}`);
-            }
-            if (effect.feedback) params.push(`feedback: ${effect.feedback.value.toFixed(2)}`);
-          }
-          
-          console.log(`[ON] ${name.toUpperCase()}: ${params.join(', ')}`);
-        }
-      }
-      
-      if (!hasActiveEffect) {
-        console.log("所有效果器均已旁路 (Bypassed / wet:0)");
-      }
-      console.log("---------------------------");
     }
   };
 })(); // IIFE 立即执行，创建模块
@@ -238,7 +162,6 @@ audioUpload.addEventListener("change", async (event) => {
     playButton.textContent = "播放";
     
   } catch (error) {
-    console.error("加载失败:", error);
     statusText.textContent = "音频加载失败，请检查文件格式";
   }
 });
