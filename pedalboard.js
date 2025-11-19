@@ -24,18 +24,22 @@ const MusicFXModule = (function() {
   
   // --- 内部私有变量 ---
   let _allEffects = {
+    compressor: null,
+    eq3: null,
     distortion: null,
     chorus: null,
-    delay: null,
-    reverb: null
+    feedbackDelay: null,
+    jcReverb: null
   };
   
   // Step 1: 效果链顺序
   let _effectOrder = [
-    "distortion", // 1. 失真
-    "chorus",     // 2. 调制
-    "delay",      // 3. 延迟
-    "reverb"      // 4. 空间
+    "compressor",    // 1. 动态控制
+    "eq3",           // 2. 音色雕刻
+    "distortion",    // 3. 失真
+    "chorus",        // 4. 调制
+    "feedbackDelay", // 5. 延迟
+    "jcReverb"       // 6. 空间
   ];
   
   let _player = null;
@@ -50,13 +54,30 @@ const MusicFXModule = (function() {
    */
   function _initializeNodes() {
     
-    // 1. Distortion (失真)
+    // 1. Compressor (压缩器) - 默认温和设置
+    _allEffects.compressor = new Tone.Compressor({
+      threshold: -24,
+      ratio: 3,
+      attack: 0.03,
+      release: 0.2
+    });
+    
+    // 2. EQ3 (三段均衡) - 默认中性
+    _allEffects.eq3 = new Tone.EQ3({
+      low: 0,
+      mid: 0,
+      high: 0,
+      lowFrequency: 400,
+      highFrequency: 2500
+    });
+    
+    // 3. Distortion (失真)
     _allEffects.distortion = new Tone.Distortion({ 
       distortion: 0.4, 
       wet: 0  // 默认关闭
     });
     
-    // 2. Chorus (合唱)
+    // 4. Chorus (合唱)
     _allEffects.chorus = new Tone.Chorus({ 
       frequency: 10,//摇摆频率
       delayTime: 0.1,
@@ -65,15 +86,15 @@ const MusicFXModule = (function() {
       wet: 0  // 默认关闭
     });
     
-    // 3. Delay (延迟)
-    _allEffects.delay = new Tone.FeedbackDelay({
+    // 5. FeedbackDelay (延迟)
+    _allEffects.feedbackDelay = new Tone.FeedbackDelay({
       delayTime: "8n",  // 延迟时间（8分音符）
       feedback: 0.2,    // 反馈量
       wet: 0  // 默认关闭
     });
     
-    // 4. JCReverb (混响) - 使用 JCReverb 替代 Reverb
-    _allEffects.reverb = new Tone.JCReverb({ 
+    // 6. JCReverb (混响)
+    _allEffects.jcReverb = new Tone.JCReverb({ 
       roomSize: 0.3,  // 房间大小
       wet: 0  // 默认关闭
     });
@@ -149,7 +170,7 @@ audioUpload.addEventListener("change", async (event) => {
     player = new Tone.Player(audioBuffer);
     
     // 创建主增益，用于防止数字削波
-    masterGain = new Tone.Gain(0.8);
+    masterGain = new Tone.Gain(0.85);
     
     // 将播放器同步到 Transport
     player.sync().start(0);

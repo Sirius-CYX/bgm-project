@@ -36,14 +36,14 @@ document.getElementById("test-chorus-off").addEventListener("click", () => {
 
 // Delay 控制
 document.getElementById("test-delay-on").addEventListener("click", () => {
-  const delay = MusicFXModule.getEffect("delay");
+  const delay = MusicFXModule.getEffect("feedbackDelay");
   if (delay) {
     delay.wet.rampTo(0.3, 0.1);
   }
 });
 
 document.getElementById("test-delay-off").addEventListener("click", () => {
-  const delay = MusicFXModule.getEffect("delay");
+  const delay = MusicFXModule.getEffect("feedbackDelay");
   if (delay) {
     delay.wet.rampTo(0, 0.1);
   }
@@ -51,14 +51,14 @@ document.getElementById("test-delay-off").addEventListener("click", () => {
 
 // Reverb (JCReverb) 控制
 document.getElementById("test-reverb-on").addEventListener("click", () => {
-  const reverb = MusicFXModule.getEffect("reverb");
+  const reverb = MusicFXModule.getEffect("jcReverb");
   if (reverb) {
     reverb.wet.rampTo(0.3, 0.1);
   }
 });
 
 document.getElementById("test-reverb-off").addEventListener("click", () => {
-  const reverb = MusicFXModule.getEffect("reverb");
+  const reverb = MusicFXModule.getEffect("jcReverb");
   if (reverb) {
     reverb.wet.rampTo(0, 0.1);
   }
@@ -68,8 +68,8 @@ document.getElementById("test-reverb-off").addEventListener("click", () => {
 document.getElementById("test-all-off").addEventListener("click", () => {
   const dist = MusicFXModule.getEffect("distortion");
   const chorus = MusicFXModule.getEffect("chorus");
-  const delay = MusicFXModule.getEffect("delay");
-  const reverb = MusicFXModule.getEffect("reverb");
+  const delay = MusicFXModule.getEffect("feedbackDelay");
+  const reverb = MusicFXModule.getEffect("jcReverb");
   
   if (dist) dist.wet.rampTo(0, 0.1);
   if (chorus) chorus.wet.rampTo(0, 0.1);
