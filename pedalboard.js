@@ -58,7 +58,7 @@ const MusicFXModule = (function() {
     _allEffects.compressor = new Tone.Compressor({
       threshold: -24,
       ratio: 3,
-      attack: 0.03,
+      attack: 0.05,
       release: 0.2
     });
     

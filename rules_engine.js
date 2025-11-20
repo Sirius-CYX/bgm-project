@@ -53,7 +53,7 @@ document.getElementById("test-delay-off").addEventListener("click", () => {
 document.getElementById("test-reverb-on").addEventListener("click", () => {
   const reverb = MusicFXModule.getEffect("jcReverb");
   if (reverb) {
-    reverb.wet.rampTo(0.3, 0.1);
+    reverb.wet.rampTo(0.2, 0.1);
   }
 });
 
