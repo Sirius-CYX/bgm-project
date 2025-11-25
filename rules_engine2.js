@@ -28,6 +28,9 @@
     "scene-anxiety": "anxiety"
   });
 
+  // 当前等待执行的场景定时器 ID，用于实现“打断并覆盖”的交互
+  let pendingScenarioTimeoutId = null;
+
   function ensureModuleAvailable() {
     if (typeof MusicFXModule === "undefined") {
       console.error("[Scene] MusicFXModule 未加载，场景引擎无法初始化。");
@@ -246,14 +249,21 @@
       return;
     }
 
+    if (pendingScenarioTimeoutId !== null) {
+      clearTimeout(pendingScenarioTimeoutId);
+      pendingScenarioTimeoutId = null;
+    }
+
     resetAllEffects();
 
-    setTimeout(() => {
+    pendingScenarioTimeoutId = setTimeout(() => {
       try {
         SCENARIOS[key].on();
         logStateLater(SCENE_LOG_DELAY_MS);
       } catch (error) {
         console.error(`[Scene] 应用场景 ${key} 失败:`, error);
+      } finally {
+        pendingScenarioTimeoutId = null;
       }
     }, APPLY_DELAY_MS);
   }
