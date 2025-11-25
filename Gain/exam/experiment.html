@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tone.js 响应曲线对比实验</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .controls {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background: #4CAF50;
+            color: white;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        button:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+        }
+        .chart-container {
+            margin: 20px 0;
+            position: relative;
+            height: 400px;
+        }
+        .info {
+            margin: 20px 0;
+            padding: 15px;
+            background: #e3f2fd;
+            border-left: 4px solid #2196F3;
+            border-radius: 4px;
+        }
+        .params {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .param-group {
+            padding: 10px;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .param-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        .param-group input {
+            width: 100%;
+            padding: 5px;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Tone.js 响应曲线对比实验</h1>
+        
+        <div class="info">
+            <h3>实验说明</h3>
+            <p><strong>控制组A（基线）</strong>：传统线性映射方案，直接将输入值赋给音频参数，无压摆率限制</p>
+            <p><strong>实验组B（提案）</strong>：使用 KineticProcessor 预处理，包含非对称的压摆率限制（上升/下降速率不同）</p>
+            <p><strong>测试信号</strong>：从 0.0 瞬间跳变至 1.0 的理想阶跃信号（Step Function）</p>
+            <p><strong>采样频率</strong>：60fps（每帧约 16.6ms）</p>
+        </div>
+
+        <div class="controls">
+            <div class="params">
+                <div class="param-group">
+                    <label>实验时长 (秒):</label>
+                    <input type="number" id="duration" value="2" min="0.5" max="10" step="0.1">
+                </div>
+                <div class="param-group">
+                    <label>上升速率限制 (单位/秒):</label>
+                    <input type="number" id="riseRate" value="3.0" min="0.1" max="20" step="0.1">
+                </div>
+                <div class="param-group">
+                    <label>下降速率限制 (单位/秒):</label>
+                    <input type="number" id="fallRate" value="2.0" min="0.1" max="20" step="0.1">
+                </div>
+            </div>
+            <button id="startBtn" onclick="startExperiment()">开始实验</button>
+            <button id="stopBtn" onclick="stopExperiment()" disabled>停止实验</button>
+            <button id="resetBtn" onclick="resetExperiment()">重置</button>
+        </div>
+
+        <div class="chart-container">
+            <canvas id="responseChart"></canvas>
+        </div>
+
+        <div class="chart-container">
+            <canvas id="derivativeChart"></canvas>
+        </div>
+
+        <div class="info" id="analysisInfo" style="display:none;">
+            <h3>实验结果分析</h3>
+            <div id="analysisContent"></div>
+        </div>
+    </div>
+
+    <script>
+        // KineticProcessor 类：用于预处理传感器数据，实现非对称压摆率限制
+        class KineticProcessor {
+            constructor(riseRate, fallRate) {
+                this.riseRate = riseRate; // 上升斜率限制 (单位/秒)
+                this.fallRate = fallRate; // 下降斜率限制 (单位/秒)
+                this.lastValue = 0; // 上一次的输出值
+                this.lastTime = null; // 上一次处理的时间戳
+            }
+            
+            // 处理输入值，返回经过压摆率限制后的输出值
+            process(targetInput) {
+                const now = Date.now();
+                
+                // 如果是第一次调用，初始化时间戳，但要从当前lastValue（0）开始应用压摆率限制
+                if (this.lastTime === null) {
+                    this.lastTime = now;
+                    // 不直接返回targetInput，而是从lastValue（0）开始，应用压摆率限制
+                    // 使用一个很小的dt（比如1ms）来计算第一次的变化量
+                    const dt = 0.001; // 1ms，用于第一次调用的计算
+                    const error = targetInput - this.lastValue;
+                    
+                    // 计算最大允许变化量
+                    const maxRise = this.riseRate * dt;
+                    const maxFall = this.fallRate * dt;
+                    
+                    // 应用压摆率限制
+                    let delta = error;
+                    if (delta > 0) {
+                        delta = Math.min(delta, maxRise);
+                    } else {
+                        delta = Math.max(delta, -maxFall);
+                    }
+                    
+                    // 更新状态
+                    this.lastValue += delta;
+                    return this.lastValue;
+                }
+                
+                const dt = (now - this.lastTime) / 1000; // 转换为秒
+                
+                // 1. 计算原始误差 (Error Calculation)
+                const error = targetInput - this.lastValue;
+                
+                // 2. 计算当前帧最大允许变化量 (Max Delta)
+                const maxRise = this.riseRate * dt;
+                const maxFall = this.fallRate * dt;
+                
+                // 3. 非线性钳位 (Non-linear Clamping)
+                let delta = error;
+                if (delta > 0) {
+                    // 上升时限制最大上升速率
+                    delta = Math.min(delta, maxRise);
+                } else {
+                    // 下降时限制最大下降速率
+                    delta = Math.max(delta, -maxFall);
+                }
+                
+                // 4. 更新状态
+                this.lastValue += delta;
+                this.lastTime = now;
+                
+                return this.lastValue; // 输出给音频参数
+            }
+            
+            // 重置处理器状态
+            reset() {
+                this.lastValue = 0;
+                this.lastTime = null;
+            }
+        }
+        
+        // 全局变量
+        let responseChart = null;
+        let derivativeChart = null;
+        let isRunning = false;
+        let animationFrameId = null;
+        let startTime = null;
+        
+        // 数据存储
+        let groupAData = []; // 控制组A：直接映射
+        let groupBData = []; // 实验组B：KineticProcessor 预处理
+        let timeData = [];
+        
+        // Tone.js 音频上下文和参数
+        let audioContext = null;
+        let paramA = null; // 控制组A的参数
+        let paramB = null; // 实验组B的参数
+        let kineticProcessor = null; // KineticProcessor 实例
+        
+        // 初始化图表
+        function initCharts() {
+            const ctx1 = document.getElementById('responseChart').getContext('2d');
+            const ctx2 = document.getElementById('derivativeChart').getContext('2d');
+            
+            // 响应曲线图
+            responseChart = new Chart(ctx1, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [
+                        {
+                            label: 'Group A - Linear Mapping (linearRampToValueAtTime)',
+                            data: [],
+                            borderColor: 'rgb(255, 99, 132)',
+                            backgroundColor: 'rgba(255, 99, 132, 0.1)',
+                            tension: 0.1,
+                            pointRadius: 0
+                        },
+                        {
+                            label: 'Group B - Asymptotic Decay (setTargetAtTime)',
+                            data: [],
+                            borderColor: 'rgb(54, 162, 235)',
+                            backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                            tension: 0.1,
+                            pointRadius: 0
+                        },
+                        {
+                            label: 'Input Step Signal',
+                            data: [],
+                            borderColor: 'rgb(201, 203, 207)',
+                            backgroundColor: 'rgba(201, 203, 207, 0.1)',
+                            borderDash: [5, 5],
+                            pointRadius: 0
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Time (seconds)'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Output Value'
+                            },
+                            min: -0.1,
+                            max: 1.2
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Response Curve Comparison'
+                        },
+                        legend: {
+                            display: true
+                        }
+                    }
+                }
+            });
+            
+            // 导数分析图（变化率）
+            derivativeChart = new Chart(ctx2, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [
+                        {
+                            label: 'Group A - Rate of Change (Derivative)',
+                            data: [],
+                            borderColor: 'rgb(255, 99, 132)',
+                            backgroundColor: 'rgba(255, 99, 132, 0.1)',
+                            tension: 0.1,
+                            pointRadius: 0
+                        },
+                        {
+                            label: 'Group B - Rate of Change (Derivative)',
+                            data: [],
+                            borderColor: 'rgb(54, 162, 235)',
+                            backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                            tension: 0.1,
+                            pointRadius: 0
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Time (seconds)'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Rate of Change (units/second)'
+                            }
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Derivative Analysis (Response Speed Comparison)'
+                        },
+                        legend: {
+                            display: true
+                        }
+                    }
+                }
+            });
+        }
+        
+        // 开始实验
+        async function startExperiment() {
+            if (isRunning) return;
+            
+            // 初始化 Tone.js 音频上下文
+            await Tone.start();
+            audioContext = Tone.getContext();
+            
+            // 创建两个独立的音频参数用于对比
+            // 使用 GainNode 的参数作为测试对象
+            const gainA = new Tone.Gain(0).toDestination();
+            const gainB = new Tone.Gain(0).toDestination();
+            paramA = gainA.gain;
+            paramB = gainB.gain;
+            
+            // 重置数据
+            groupAData = [];
+            groupBData = [];
+            timeData = [];
+            
+            // 获取参数
+            const duration = parseFloat(document.getElementById('duration').value);
+            const riseRate = parseFloat(document.getElementById('riseRate').value);
+            const fallRate = parseFloat(document.getElementById('fallRate').value);
+            
+            // 创建并初始化 KineticProcessor
+            kineticProcessor = new KineticProcessor(riseRate, fallRate);
+            kineticProcessor.reset();
+            
+            // 设置初始值
+            const audioStartTime = audioContext.currentTime;
+            const perfStartTime = performance.now();
+            
+            // 先取消所有之前的调度，确保干净的状态
+            paramA.cancelScheduledValues(0);
+            paramB.cancelScheduledValues(0);
+            
+            // 设置初始值为 0
+            paramA.setValueAtTime(0, audioStartTime);
+            paramB.setValueAtTime(0, audioStartTime);
+            
+            // 更新UI
+            document.getElementById('startBtn').disabled = true;
+            document.getElementById('stopBtn').disabled = false;
+            isRunning = true;
+            startTime = perfStartTime;
+            
+            // 先记录 t=0 的初始数据点，确保能看到从0开始的变化
+            const stepTime = 0.01; // 阶跃信号跳变时间（秒）
+            const initialInputSignal = 0.0; // t=0 时输入信号为 0
+            
+            // 控制组A：初始值为 0
+            const initialAudioTime = audioContext.currentTime;
+            paramA.setValueAtTime(initialInputSignal, initialAudioTime);
+            const initialValueA = initialInputSignal;
+            
+            // 实验组B：初始值为 0（KineticProcessor 会从 0 开始）
+            const initialProcessedValue = kineticProcessor.process(initialInputSignal);
+            paramB.setValueAtTime(initialProcessedValue, initialAudioTime);
+            const initialValueB = initialProcessedValue;
+            
+            // 存储初始数据点
+            timeData.push(0);
+            groupAData.push(initialValueA);
+            groupBData.push(initialValueB);
+            
+            // 开始数据采集和处理循环（60fps ≈ 16.6ms per frame）
+            const sampleInterval = 1000 / 60; // 约 16.6ms
+            let lastSampleTime = 0;
+            
+            function processFrame(currentTimeMs) {
+                if (!isRunning) return;
+                
+                const elapsed = currentTimeMs - perfStartTime;
+                const elapsedSeconds = elapsed / 1000;
+                
+                // 每 16.6ms 处理一次（60fps）
+                if (elapsed - lastSampleTime >= sampleInterval) {
+                    // 生成输入信号：从 0.0 瞬间跳变至 1.0 的阶跃信号
+                    // 在 t=stepTime 秒时跳变到 1.0，这样可以观察到从0到1的完整过渡过程
+                    const inputSignal = elapsedSeconds >= stepTime ? 1.0 : 0.0;
+                    
+                    // 控制组A：直接将输入值赋给音频参数（无压摆率限制）
+                    const audioTime = audioContext.currentTime;
+                    paramA.setValueAtTime(inputSignal, audioTime);
+                    const valueA = inputSignal;
+                    
+                    // 实验组B：使用 KineticProcessor 预处理后再赋给音频参数
+                    const processedValue = kineticProcessor.process(inputSignal);
+                    paramB.setValueAtTime(processedValue, audioTime);
+                    const valueB = processedValue;
+                    
+                    // 调试：在控制台输出前几个采样点（可选）
+                    if (timeData.length < 5) {
+                        console.log(`采样点 ${timeData.length}: 时间=${elapsedSeconds.toFixed(4)}s, input=${inputSignal.toFixed(4)}, valueA=${valueA.toFixed(4)}, valueB=${valueB.toFixed(4)}`);
+                    }
+                    
+                    // 存储数据
+                    timeData.push(elapsedSeconds);
+                    groupAData.push(valueA);
+                    groupBData.push(valueB);
+                    
+                    // 更新图表
+                    updateCharts();
+                    
+                    lastSampleTime = elapsed;
+                }
+                
+                // 如果实验时长未到，继续处理
+                if (elapsedSeconds < duration) {
+                    animationFrameId = requestAnimationFrame(processFrame);
+                } else {
+                    // 实验结束
+                    stopExperiment();
+                    performAnalysis();
+                }
+            }
+            
+            // 开始处理循环
+            animationFrameId = requestAnimationFrame(processFrame);
+        }
+        
+        // 更新图表
+        function updateCharts() {
+            // 更新响应曲线图
+            responseChart.data.labels = timeData;
+            responseChart.data.datasets[0].data = groupAData.map((v, i) => ({
+                x: timeData[i],
+                y: v
+            }));
+            responseChart.data.datasets[1].data = groupBData.map((v, i) => ({
+                x: timeData[i],
+                y: v
+            }));
+            
+            // 输入阶跃信号（在 t=0 时从 0 跳变到 1）
+            const stepSignal = timeData.map(t => t >= 0 ? 1.0 : 0.0);
+            responseChart.data.datasets[2].data = stepSignal.map((v, i) => ({
+                x: timeData[i],
+                y: v
+            }));
+            
+            responseChart.update('none'); // 不显示动画以提高性能
+            
+            // 计算并更新导数图
+            if (timeData.length >= 2) {
+                const derivativeA = [];
+                const derivativeB = [];
+                
+                // 计算数值导数（差分）
+                for (let i = 1; i < timeData.length; i++) {
+                    const dt = timeData[i] - timeData[i - 1];
+                    if (dt > 0) {
+                        derivativeA.push({
+                            x: timeData[i],
+                            y: (groupAData[i] - groupAData[i - 1]) / dt
+                        });
+                        derivativeB.push({
+                            x: timeData[i],
+                            y: (groupBData[i] - groupBData[i - 1]) / dt
+                        });
+                    }
+                }
+                
+                derivativeChart.data.labels = timeData.slice(1);
+                derivativeChart.data.datasets[0].data = derivativeA;
+                derivativeChart.data.datasets[1].data = derivativeB;
+                derivativeChart.update('none');
+            }
+        }
+        
+        // 停止实验
+        function stopExperiment() {
+            isRunning = false;
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+            
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('stopBtn').disabled = true;
+            
+            // 停止音频
+            if (paramA) paramA.cancelScheduledValues(0);
+            if (paramB) paramB.cancelScheduledValues(0);
+        }
+        
+        // 重置实验
+        function resetExperiment() {
+            stopExperiment();
+            groupAData = [];
+            groupBData = [];
+            timeData = [];
+            
+            // 重置 KineticProcessor
+            if (kineticProcessor) {
+                kineticProcessor.reset();
+            }
+            
+            // 重置图表
+            responseChart.data.labels = [];
+            responseChart.data.datasets[0].data = [];
+            responseChart.data.datasets[1].data = [];
+            responseChart.data.datasets[2].data = [];
+            responseChart.update();
+            
+            derivativeChart.data.labels = [];
+            derivativeChart.data.datasets[0].data = [];
+            derivativeChart.data.datasets[1].data = [];
+            derivativeChart.update();
+            
+            document.getElementById('analysisInfo').style.display = 'none';
+        }
+        
+        // 执行分析
+        function performAnalysis() {
+            if (timeData.length < 2) return;
+            
+            // 计算关键指标
+            const finalValueA = groupAData[groupAData.length - 1];
+            const finalValueB = groupBData[groupBData.length - 1];
+            
+            // 计算达到 90% 目标值的时间
+            const target90 = 0.9;
+            let timeTo90A = null;
+            let timeTo90B = null;
+            
+            for (let i = 0; i < groupAData.length; i++) {
+                if (timeTo90A === null && groupAData[i] >= target90) {
+                    timeTo90A = timeData[i];
+                }
+                if (timeTo90B === null && groupBData[i] >= target90) {
+                    timeTo90B = timeData[i];
+                }
+            }
+            
+            // 计算最大变化率
+            let maxDerivativeA = 0;
+            let maxDerivativeB = 0;
+            
+            for (let i = 1; i < timeData.length; i++) {
+                const dt = timeData[i] - timeData[i - 1];
+                if (dt > 0) {
+                    const derivA = Math.abs((groupAData[i] - groupAData[i - 1]) / dt);
+                    const derivB = Math.abs((groupBData[i] - groupBData[i - 1]) / dt);
+                    maxDerivativeA = Math.max(maxDerivativeA, derivA);
+                    maxDerivativeB = Math.max(maxDerivativeB, derivB);
+                }
+            }
+            
+            // 计算平滑度（变化率的方差，越小越平滑）
+            const derivativesA = [];
+            const derivativesB = [];
+            for (let i = 1; i < timeData.length; i++) {
+                const dt = timeData[i] - timeData[i - 1];
+                if (dt > 0) {
+                    derivativesA.push((groupAData[i] - groupAData[i - 1]) / dt);
+                    derivativesB.push((groupBData[i] - groupBData[i - 1]) / dt);
+                }
+            }
+            
+            const varianceA = calculateVariance(derivativesA);
+            const varianceB = calculateVariance(derivativesB);
+            
+            // 显示分析结果
+            const analysisContent = document.getElementById('analysisContent');
+            analysisContent.innerHTML = `
+                <h4>关键指标对比</h4>
+                <table style="width:100%; border-collapse: collapse; margin-top: 10px;">
+                    <tr style="background: #f0f0f0;">
+                        <th style="padding: 8px; border: 1px solid #ddd;">指标</th>
+                        <th style="padding: 8px; border: 1px solid #ddd;">控制组A (直接映射)</th>
+                        <th style="padding: 8px; border: 1px solid #ddd;">实验组B (KineticProcessor)</th>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border: 1px solid #ddd;">最终值</td>
+                        <td style="padding: 8px; border: 1px solid #ddd;">${finalValueA.toFixed(4)}</td>
+                        <td style="padding: 8px; border: 1px solid #ddd;">${finalValueB.toFixed(4)}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border: 1px solid #ddd;">达到90%目标值时间 (秒)</td>
+                        <td style="padding: 8px; border: 1px solid #ddd;">${timeTo90A !== null ? timeTo90A.toFixed(4) : '未达到'}</td>
+                        <td style="padding: 8px; border: 1px solid #ddd;">${timeTo90B !== null ? timeTo90B.toFixed(4) : '未达到'}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border: 1px solid #ddd;">最大变化率 (单位/秒)</td>
+                        <td style="padding: 8px; border: 1px solid #ddd;">${maxDerivativeA.toFixed(4)}</td>
+                        <td style="padding: 8px; border: 1px solid #ddd;">${maxDerivativeB.toFixed(4)}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border: 1px solid #ddd;">变化率方差 (平滑度)</td>
+                        <td style="padding: 8px; border: 1px solid #ddd;">${varianceA.toFixed(6)}</td>
+                        <td style="padding: 8px; border: 1px solid #ddd;">${varianceB.toFixed(6)}</td>
+                    </tr>
+                </table>
+                <h4 style="margin-top: 20px;">分析结论</h4>
+                <ul>
+                    <li><strong>控制组A（直接映射）</strong>：直接将输入值赋给音频参数，无压摆率限制。面对阶跃信号时，输出立即跳变到目标值，响应曲线为阶跃函数。变化率在跳变瞬间为无穷大，之后为0。</li>
+                    <li><strong>实验组B（KineticProcessor 预处理）</strong>：经过 KineticProcessor 预处理，包含非对称的压摆率限制。面对阶跃信号时，输出以受控的速率平滑过渡到目标值。响应曲线呈现分段线性特征，变化率受限于设定的上升/下降速率。</li>
+                    <li><strong>导数分析</strong>：控制组A的导数在跳变瞬间为无穷大（实际采样中表现为极大值），之后为0；实验组B的导数受压摆率限制，在过渡期间保持相对稳定，不会出现突变。</li>
+                </ul>
+            `;
+            
+            document.getElementById('analysisInfo').style.display = 'block';
+        }
+        
+        // 计算方差
+        function calculateVariance(values) {
+            if (values.length === 0) return 0;
+            const mean = values.reduce((a, b) => a + b, 0) / values.length;
+            const squaredDiffs = values.map(v => Math.pow(v - mean, 2));
+            return squaredDiffs.reduce((a, b) => a + b, 0) / values.length;
+        }
+        
+        // 页面加载时初始化
+        window.addEventListener('load', () => {
+            initCharts();
+        });
+    </script>
+</body>
+</html>
