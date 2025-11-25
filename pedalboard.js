@@ -212,3 +212,28 @@ stopButton.addEventListener("click", () => {
   }
 });
 
+// 播放速度微调控制，确保 ±5% 微变化可被精确展示并作用于 Player
+const rateSlider = document.getElementById("playback-rate");
+const rateVal = document.getElementById("rate-val");
+
+if (rateSlider && rateVal) {
+  rateSlider.addEventListener("input", (event) => {
+    const sliderValue = parseFloat(event.target.value);
+    if (Number.isNaN(sliderValue)) {
+      return;
+    }
+
+    // 将显示值固定为 3 位小数，方便观察极小的速率变化
+    rateVal.textContent = sliderValue.toFixed(3);
+
+    if (player) {
+      const playbackParam = player.playbackRate;
+      if (playbackParam && typeof playbackParam.value === "number") {
+        playbackParam.value = sliderValue;
+      } else {
+        player.playbackRate = sliderValue;
+      }
+    }
+  });
+}
+
