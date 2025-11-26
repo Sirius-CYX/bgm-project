@@ -16,8 +16,13 @@
   const FX_DEFAULTS = Object.freeze({
     eq3: { low: 0, mid: 0, high: 0 },
     distortion: { distortion: 0.4, wet: 0 },
+    bitCrusher: { bits: 8, wet: 0 },
+    tremolo: { frequency: 10, depth: 0.5, wet: 0 },
+    vibrato: { frequency: 5, depth: 0.1, wet: 0 },
     chorus: { frequency: 10, depth: 0.9, delayTime: 0.1, spread: 180, wet: 0 },
     feedbackDelay: { delayTime: "8n", feedback: 0.2, wet: 0 },
+    autoPanner: { frequency: 1, depth: 1, wet: 0 },
+    stereoWidener: { width: 0.5, wet: 0 },
     jcReverb: { roomSize: 0.3, wet: 0 }
   });
 
@@ -25,7 +30,8 @@
     "scene-epic": "epic",
     "scene-lofi": "lofi",
     "scene-claustro": "claustro",
-    "scene-anxiety": "anxiety"
+    "scene-anxiety": "anxiety",
+    "scene-test": "test"
   });
 
   // 当前等待执行的场景定时器 ID，用于实现“打断并覆盖”的交互
@@ -108,6 +114,26 @@
     setParam(dist, "wet", FX_DEFAULTS.distortion.wet, RESET_RAMP_TIME);
   }
 
+  function resetBitCrusher(node) {
+    if (!node) return;
+    setParam(node, "bits", FX_DEFAULTS.bitCrusher.bits);
+    setParam(node, "wet", FX_DEFAULTS.bitCrusher.wet, RESET_RAMP_TIME);
+  }
+
+  function resetTremolo(node) {
+    if (!node) return;
+    setParam(node, "frequency", FX_DEFAULTS.tremolo.frequency);
+    setParam(node, "depth", FX_DEFAULTS.tremolo.depth);
+    setParam(node, "wet", FX_DEFAULTS.tremolo.wet, RESET_RAMP_TIME);
+  }
+
+  function resetVibrato(node) {
+    if (!node) return;
+    setParam(node, "frequency", FX_DEFAULTS.vibrato.frequency);
+    setParam(node, "depth", FX_DEFAULTS.vibrato.depth);
+    setParam(node, "wet", FX_DEFAULTS.vibrato.wet, RESET_RAMP_TIME);
+  }
+
   function resetChorus(chorus) {
     if (!chorus) return;
     setParam(chorus, "frequency", FX_DEFAULTS.chorus.frequency);
@@ -130,6 +156,19 @@
     setParam(reverb, "wet", FX_DEFAULTS.jcReverb.wet, RESET_RAMP_TIME);
   }
 
+  function resetAutoPanner(node) {
+    if (!node) return;
+    setParam(node, "frequency", FX_DEFAULTS.autoPanner.frequency);
+    setParam(node, "depth", FX_DEFAULTS.autoPanner.depth);
+    setParam(node, "wet", FX_DEFAULTS.autoPanner.wet, RESET_RAMP_TIME);
+  }
+
+  function resetStereoWidener(node) {
+    if (!node) return;
+    setParam(node, "width", FX_DEFAULTS.stereoWidener.width);
+    setParam(node, "wet", FX_DEFAULTS.stereoWidener.wet, RESET_RAMP_TIME);
+  }
+
   function resetAllEffects() {
     if (!ensureModuleAvailable()) return;
     console.log("[Scene] 重置所有效果(含速度)...");
@@ -139,9 +178,14 @@
 
     resetEq(MusicFXModule.getEffect("eq3"));
     resetDistortion(MusicFXModule.getEffect("distortion"));
+    resetBitCrusher(MusicFXModule.getEffect("bitCrusher"));
+    resetTremolo(MusicFXModule.getEffect("tremolo"));
+    resetVibrato(MusicFXModule.getEffect("vibrato"));
     resetChorus(MusicFXModule.getEffect("chorus"));
     resetDelay(MusicFXModule.getEffect("feedbackDelay"));
     resetReverb(MusicFXModule.getEffect("jcReverb"));
+    resetAutoPanner(MusicFXModule.getEffect("autoPanner"));
+    resetStereoWidener(MusicFXModule.getEffect("stereoWidener"));
 
     logStateLater(RESET_LOG_DELAY_MS);
   }
@@ -169,6 +213,12 @@
         if (rev) {
           setParam(rev, "roomSize", 0.5); 
           setParam(rev, "wet", 0.1, 1);   // 稍微增加一点湿润度
+        }
+
+        const stereo = MusicFXModule.getEffect("stereoWidener");
+        if (stereo) {
+          setParam(stereo, "width", 0.8, 1);
+          setParam(stereo, "wet", 0.5, 1);
         }
 
         const chorus = MusicFXModule.getEffect("chorus");
@@ -248,11 +298,33 @@
           setParam(dist, "wet", 0.1, 0.2);   // 原0.4 -> 0.2 (融入背景)
         }
 
+        const tremolo = MusicFXModule.getEffect("tremolo");
+        if (tremolo) {
+          setParam(tremolo, "frequency", 10, 0.5);
+          setParam(tremolo, "depth", 0.8, 0.5);
+          setParam(tremolo, "wet", 0.3, 0.5);
+        }
+
         const delay = MusicFXModule.getEffect("feedbackDelay");
         if (delay) {
           setParam(delay, "delayTime", "8n");
           setParam(delay, "feedback", 0.15, 0.5); // 原0.6 -> 0.15 (只重复一下，像心慌)
-          setParam(delay, "wet", 0.3, 0.5);       // 原0.4 -> 0.2 (微量)
+          setParam(delay, "wet", 0.2, 0.5);       // 原0.4 -> 0.2 (微量)
+        }
+      },
+      off: () => resetAllEffects()
+    },
+    test: {
+      on: () => {
+        console.log("[Scene] 切换到: 测试场景 (Test Scenario)");
+
+        // 该场景专用于单独调试任意效果参数
+        // 默认示例：调节 JCReverb 作为占位，请根据需要修改
+        const tremolo = MusicFXModule.getEffect("tremolo");
+        if (tremolo) {
+          setParam(tremolo, "frequency", 10, 0.5);
+          setParam(tremolo, "depth", 0.8, 0.5);
+          setParam(tremolo, "wet", 0.2, 0.5);
         }
       },
       off: () => resetAllEffects()

@@ -26,20 +26,30 @@ const MusicFXModule = (function() {
   let _allEffects = {
     compressor: null,
     eq3: null,
+    bitCrusher: null,
     distortion: null,
+    tremolo: null,
+    vibrato: null,
     chorus: null,
     feedbackDelay: null,
+    autoPanner: null,
+    stereoWidener: null,
     jcReverb: null
   };
   
   // Step 1: 效果链顺序
   let _effectOrder = [
-    "compressor",    // 1. 动态控制
-    "eq3",           // 2. 音色雕刻
-    "distortion",    // 3. 失真
-    "chorus",        // 4. 调制
-    "feedbackDelay", // 5. 延迟
-    "jcReverb"       // 6. 空间
+    "compressor",     // 1. 动态控制
+    "eq3",            // 2. 音色雕刻
+    "bitCrusher",     // 3. 数字破碎
+    "distortion",     // 4. 失真
+    "tremolo",        // 5. 音量切片
+    "vibrato",        // 6. 音高颤动
+    "chorus",         // 7. 调制叠加
+    "feedbackDelay",  // 8. 回声
+    "autoPanner",     // 9. 左右移动
+    "stereoWidener",  // 10. 立体声加宽
+    "jcReverb"        // 11. 混响空间
   ];
   
   let _player = null;
@@ -72,13 +82,33 @@ const MusicFXModule = (function() {
       highFrequency: 2500
     });
     
-    // 3. Distortion (失真)
+    // 3. BitCrusher (数字破碎)
+    _allEffects.bitCrusher = new Tone.BitCrusher({
+      bits: 8,
+      wet: 0
+    });
+    
+    // 4. Distortion (失真)
     _allEffects.distortion = new Tone.Distortion({ 
       distortion: 0.4, 
       wet: 0  // 默认关闭
     });
     
-    // 4. Chorus (合唱)
+    // 5. Tremolo (音量切片) - 需要启动
+    _allEffects.tremolo = new Tone.Tremolo({
+      frequency: 10,
+      depth: 0.5,
+      wet: 0
+    }).start();
+    
+    // 6. Vibrato (音高颤动)
+    _allEffects.vibrato = new Tone.Vibrato({
+      frequency: 5,
+      depth: 0.1,
+      wet: 0
+    });
+    
+    // 7. Chorus (合唱)
     _allEffects.chorus = new Tone.Chorus({ 
       frequency: 10,//摇摆频率
       delayTime: 0.1,
@@ -87,14 +117,27 @@ const MusicFXModule = (function() {
       wet: 0  // 默认关闭
     });
     
-    // 5. FeedbackDelay (延迟)
+    // 8. FeedbackDelay (延迟)
     _allEffects.feedbackDelay = new Tone.FeedbackDelay({
       delayTime: "8n",  // 延迟时间（8分音符）
       feedback: 0.2,    // 反馈量
       wet: 0  // 默认关闭
     });
     
-    // 6. JCReverb (混响)
+    // 9. AutoPanner (左右声相) - 需要启动
+    _allEffects.autoPanner = new Tone.AutoPanner({
+      frequency: 1,
+      depth: 1,
+      wet: 0
+    }).start();
+    
+    // 10. StereoWidener (立体声宽度)
+    _allEffects.stereoWidener = new Tone.StereoWidener({
+      width: 0.5,
+      wet: 0
+    });
+    
+    // 11. JCReverb (混响)
     _allEffects.jcReverb = new Tone.JCReverb({ 
       roomSize: 0.3,  // 房间大小
       wet: 0  // 默认关闭
