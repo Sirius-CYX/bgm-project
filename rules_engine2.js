@@ -74,6 +74,17 @@
     node[param] = value;
   }
 
+  /**
+   * 设置播放速度的辅助函数
+   * @param {number} value - 目标速度 (如 1.0)
+   * @param {number} [rampTime] - 过渡时间 (秒)
+   */
+  function setRate(value, rampTime) {
+    if (ensureModuleAvailable() && typeof MusicFXModule.setPlaybackRate === "function") {
+      MusicFXModule.setPlaybackRate(value, rampTime);
+    }
+  }
+
   function logStateLater(delayMs) {
     if (!ensureModuleAvailable()) return;
     if (typeof MusicFXModule.logCurrentState === "function") {
@@ -121,7 +132,10 @@
 
   function resetAllEffects() {
     if (!ensureModuleAvailable()) return;
-    console.log("[Scene] 重置所有效果...");
+    console.log("[Scene] 重置所有效果(含速度)...");
+
+    // 重置速度回 1.0
+    setRate(1.0, RESET_RAMP_TIME);
 
     resetEq(MusicFXModule.getEffect("eq3"));
     resetDistortion(MusicFXModule.getEffect("distortion"));
@@ -139,6 +153,9 @@
     epic: {
       on: () => {
         console.log("[Scene] 切换到: 史诗感 (Epic)");
+
+        // 史诗感：稍微减速，增加庄重感 (0.96x)
+        setRate(0.985, 5);
 
         const eq = MusicFXModule.getEffect("eq3");
         if (eq) {
@@ -212,6 +229,9 @@
     anxiety: {
       on: () => {
         console.log("[Scene] 切换到: 焦虑感 (Anxiety)");
+
+        // 焦虑感：稍微加速，制造紧迫感 (1.04x)
+        setRate(1.015, 5);
 
         const eq = MusicFXModule.getEffect("eq3");
         if (eq) {

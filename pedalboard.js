@@ -45,6 +45,7 @@ const MusicFXModule = (function() {
   let _player = null;
   let _masterGain = null;
   let _limiter = null;
+  let _rateInterval = null; // 用于存储播放速度渐变定时器 ID
   
   // --- 内部私有函数 ---
   
@@ -113,6 +114,12 @@ const MusicFXModule = (function() {
      * 负责创建所有节点并连接效果链
      */
     init: function(playerNode, gainNode) {
+      // 清理可能存在的旧定时器（防止重新初始化时冲突）
+      if (_rateInterval) {
+        clearInterval(_rateInterval);
+        _rateInterval = null;
+      }
+      
       _player = playerNode;
       _masterGain = gainNode;
       
@@ -141,6 +148,70 @@ const MusicFXModule = (function() {
         return null;
       }
       return _allEffects[effectName];
+    },
+    
+    /**
+     * API 3: 设置播放速度 (手动平滑版 - 强制生效)
+     * @param {number} value - 目标速度
+     * @param {number} [rampTime] - 过渡时间 (秒)
+     */
+    setPlaybackRate: function(value, rampTime) {
+      if (!_player) return;
+
+      // 如果没有时间，直接设置
+      if (!rampTime || rampTime <= 0) {
+        if (_player.playbackRate && _player.playbackRate.value !== undefined) {
+          _player.playbackRate.value = value;
+        } else {
+          _player.playbackRate = value;
+        }
+        return;
+      }
+
+      // *** 核心修复：手动计算渐变 ***
+      // 既然 rampTo 不听话，我们自己动手
+      const startRate = (_player.playbackRate && _player.playbackRate.value !== undefined) 
+        ? _player.playbackRate.value 
+        : _player.playbackRate;
+      const targetRate = value;
+      const durationMs = rampTime * 1000;
+      const stepTimeMs = 20; // 每 20ms 更新一次 (50fps)
+      const steps = Math.ceil(durationMs / stepTimeMs);
+      const rateStep = (targetRate - startRate) / steps;
+
+      let currentStep = 0;
+
+      // 清除可能存在的旧定时器 (防止冲突)
+      if (_rateInterval) {
+        clearInterval(_rateInterval);
+        _rateInterval = null;
+      }
+
+      _rateInterval = setInterval(() => {
+        currentStep++;
+
+        const newRate = startRate + (rateStep * currentStep);
+
+        // 设置新值
+        if (_player.playbackRate && _player.playbackRate.value !== undefined) {
+          _player.playbackRate.value = newRate;
+        } else {
+          _player.playbackRate = newRate;
+        }
+
+        // 结束条件
+        if (currentStep >= steps) {
+          clearInterval(_rateInterval);
+          _rateInterval = null;
+
+          // 确保最后精准落在目标值上
+          if (_player.playbackRate && _player.playbackRate.value !== undefined) {
+            _player.playbackRate.value = targetRate;
+          } else {
+            _player.playbackRate = targetRate;
+          }
+        }
+      }, stepTimeMs);
     }
   };
 })(); // IIFE 立即执行，创建模块
