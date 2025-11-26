@@ -41,6 +41,18 @@
   </style>
 </head>
 <body>
+  <div style="background: #333; color: #fff; padding: 20px; border-radius: 8px; margin-bottom: 20px; text-align: center;">
+    <h2>🎮 游戏状态模拟器 (AI Director)</h2>
+    <p>模拟真实游戏发送的状态信号：</p>
+    
+    <div style="font-size: 24px; margin: 20px 0; font-weight: bold; min-height: 1.2em;">
+      状态: <span id="sim-current-state" style="color: #aaa;">等待启动...</span>
+    </div>
+    <button id="sim-toggle-btn" style="font-size: 18px; padding: 10px 30px; cursor: pointer;">
+      ▶ 启动 游戏模拟器
+    </button>
+  </div>
+  
   <h2>Step 1: 静态效果链原型</h2>
   <p>加载音乐，然后使用"测试"按钮或F12控制台来操控效果。</p>
   
@@ -48,6 +60,7 @@
   <script src="pedalboard.js" defer></script>
   <script src="rules_engine.js" defer></script>
   <script src="rules_engine2.js" defer></script>
+  <script src="game_simulator.js" defer></script>
   <hr>
   
   <h3>播放器</h3>
@@ -72,6 +85,8 @@
   </div>
   <hr>
   
+  <!-- API 测试部分已注释 -->
+  <!--
   <h3>API 测试</h3>
   
   <h4>Distortion (失真)</h4>
@@ -94,6 +109,7 @@
   <button id="test-all-off">关闭所有效果</button>
   <button id="test-log-state">打印当前状态到控制台</button>
   <hr>
+  -->
   <h3>场景切换</h3>
   <p>通过声明式场景按钮快速应用指定听感。</p>
   <button id="scene-epic">史诗模式</button>

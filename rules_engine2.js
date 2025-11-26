@@ -317,6 +317,27 @@
     bindSceneButtons();
     console.log("规则引擎 (Scene Mode) 已加载完毕。");
   });
+
+  // [新] 暴露公共接口给外部 (模拟器或真实游戏)
+  window.GameAudioInterface = {
+    /**
+     * 发送场景标签
+     * @param {string} sceneKey - 场景ID ('epic', 'anxiety', 'reset'...)
+     */
+    sendSignal: (sceneKey) => {
+      if (sceneKey === "reset") {
+        // 重置场景：直接调用内部函数
+        resetAllEffects();
+      } else if (SCENARIOS[sceneKey]) {
+        // 应用场景：直接调用内部函数
+        applyScenario(sceneKey);
+      } else {
+        console.warn(`[GameAudioInterface] 未知的场景标签: ${sceneKey}`);
+      }
+    }
+  };
+
+  console.log("规则引擎 (Scene Mode) 已加载完毕，接口已暴露: window.GameAudioInterface");
 })();
 
 
