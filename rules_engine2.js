@@ -31,6 +31,13 @@
     "scene-lofi": "lofi",
     "scene-claustro": "claustro",
     "scene-anxiety": "anxiety",
+    "scene-heroic": "heroic",
+    "scene-warmth": "warmth",
+    "scene-intimacy": "intimacy",
+    "scene-cold": "cold",
+    "scene-panic": "panic",
+    "scene-suspense": "suspense",
+    "scene-horror": "horror",
     "scene-test": "test"
   });
 
@@ -174,7 +181,7 @@
     console.log("[Scene] 重置所有效果(含速度)...");
 
     // 重置速度回 1.0
-    setRate(1.0, RESET_RAMP_TIME);
+    setRate(1.0, 5);
 
     resetEq(MusicFXModule.getEffect("eq3"));
     resetDistortion(MusicFXModule.getEffect("distortion"));
@@ -252,7 +259,7 @@
         if (chorus) {
           setParam(chorus, "frequency", 3.0);
           setParam(chorus, "depth", 0.7);
-          setParam(chorus, "wet", 0.5, 1);
+          setParam(chorus, "wet", 0.3, 1);
         }
       },
       off: () => resetAllEffects()
@@ -310,6 +317,182 @@
           setParam(delay, "delayTime", "8n");
           setParam(delay, "feedback", 0.15, 0.5); // 原0.6 -> 0.15 (只重复一下，像心慌)
           setParam(delay, "wet", 0.2, 0.5);       // 原0.4 -> 0.2 (微量)
+        }
+      },
+      off: () => resetAllEffects()
+    },
+    heroic: {
+      on: () => {
+        console.log("[Scene] 切换到: 英雄时刻 (Heroic)");
+
+        setRate(1.0, 1);
+
+        const eq = MusicFXModule.getEffect("eq3");
+        if (eq) {
+          setParam(eq, "low", 0, 1);
+          setParam(eq, "mid", 2, 1);
+          setParam(eq, "high", 2, 1);
+        }
+
+        const dist = MusicFXModule.getEffect("distortion");
+        if (dist) {
+          setParam(dist, "distortion", 0.1);
+          setParam(dist, "wet", 0.05, 1);
+        }
+
+        const rev = MusicFXModule.getEffect("jcReverb");
+        if (rev) {
+          setParam(rev, "roomSize", 0.4);
+          setParam(rev, "wet", 0.15, 1);
+        }
+      },
+      off: () => resetAllEffects()
+    },
+    warmth: {
+      on: () => {
+        console.log("[Scene] 切换到: 温暖感 (Warmth)");
+
+        setRate(0.99, 5);
+
+        const eq = MusicFXModule.getEffect("eq3");
+        if (eq) {
+          setParam(eq, "low", 2, 1);
+          setParam(eq, "mid", 1, 1);
+          setParam(eq, "high", -2, 1);
+        }
+
+        const dist = MusicFXModule.getEffect("distortion");
+        if (dist) {
+          setParam(dist, "distortion", 0.05);
+          setParam(dist, "wet", 0.1, 1);
+        }
+
+        const chorus = MusicFXModule.getEffect("chorus");
+        if (chorus) {
+          setParam(chorus, "depth", 0.3);
+          setParam(chorus, "wet", 0.1, 1);
+        }
+      },
+      off: () => resetAllEffects()
+    },
+    intimacy: {
+      on: () => {
+        console.log("[Scene] 切换到: 亲密感 (Intimacy)");
+
+        setRate(1.0, 1);
+
+        const eq = MusicFXModule.getEffect("eq3");
+        if (eq) {
+          setParam(eq, "high", -2, 1);
+          setParam(eq, "mid", 3, 1);
+        }
+
+        const stereo = MusicFXModule.getEffect("stereoWidener");
+        if (stereo) {
+          setParam(stereo, "width", 0.5, 1);
+          setParam(stereo, "wet", 1, 1);
+        }
+      },
+      off: () => resetAllEffects()
+    },
+    cold: {
+      on: () => {
+        console.log("[Scene] 切换到: 冰冷感 (Cold)");
+
+        setRate(1.0, 1);
+
+        const eq = MusicFXModule.getEffect("eq3");
+        if (eq) {
+          setParam(eq, "low", -5, 1);
+          setParam(eq, "high", 2, 1);
+        }
+
+        const bit = MusicFXModule.getEffect("bitCrusher");
+        if (bit) {
+          setParam(bit, "bits", 12);
+          setParam(bit, "wet", 0.1, 1);
+        }
+
+        const rev = MusicFXModule.getEffect("jcReverb");
+        if (rev) {
+          setParam(rev, "roomSize", 0.2);
+          setParam(rev, "wet", 0.1, 1);
+        }
+      },
+      off: () => resetAllEffects()
+    },
+    panic: {
+      on: () => {
+        console.log("[Scene] 切换到: 恐慌感 (Panic)");
+
+        setRate(1.008, 5);
+
+        const pan = MusicFXModule.getEffect("autoPanner");
+        if (pan) {
+          setParam(pan, "frequency", 10);
+          setParam(pan, "depth", 1);
+          setParam(pan, "wet", 0.2, 0.2);
+        }
+
+        const dist = MusicFXModule.getEffect("distortion");
+        if (dist) {
+          setParam(dist, "distortion", 0.2);
+          setParam(dist, "wet", 0.05, 0.2);
+        }
+      },
+      off: () => resetAllEffects()
+    },
+    suspense: {
+      on: () => {
+        console.log("[Scene] 切换到: 悬疑感 (Suspense)");
+
+        setRate(0.975, 5);
+
+        const eq = MusicFXModule.getEffect("eq3");
+        if (eq) {
+          setParam(eq, "low", -3, 1);
+          setParam(eq, "high", -5, 1);
+        }
+
+        const vib = MusicFXModule.getEffect("vibrato");
+        if (vib) {
+          setParam(vib, "frequency", 2);
+          setParam(vib, "depth", 0.1);
+          setParam(vib, "wet", 0.3, 1);
+        }
+
+        const delay = MusicFXModule.getEffect("feedbackDelay");
+        if (delay) {
+          setParam(delay, "delayTime", "4n");
+          setParam(delay, "feedback", 0.3);
+          setParam(delay, "wet", 0.25, 1);
+        }
+      },
+      off: () => resetAllEffects()
+    },
+    horror: {
+      on: () => {
+        console.log("[Scene] 切换到: 恐怖感 (Horror)");
+
+        setRate(0.972, 5);
+
+        const bit = MusicFXModule.getEffect("bitCrusher");
+        if (bit) {
+          setParam(bit, "bits", 8);
+          setParam(bit, "wet", 0.08, 2);
+        }
+
+        const rev = MusicFXModule.getEffect("jcReverb");
+        if (rev) {
+          setParam(rev, "roomSize", 0.8);
+          setParam(rev, "wet", 0.07, 2);
+        }
+
+        const trem = MusicFXModule.getEffect("tremolo");
+        if (trem) {
+          setParam(trem, "frequency", 2);
+          setParam(trem, "depth", 0.8);
+          setParam(trem, "wet", 0.07, 2);
         }
       },
       off: () => resetAllEffects()
