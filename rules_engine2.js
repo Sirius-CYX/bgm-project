@@ -38,6 +38,16 @@
     "scene-panic": "panic",
     "scene-suspense": "suspense",
     "scene-horror": "horror",
+    "scene-empty": "empty",
+    "scene-underwater": "underwater",
+    "scene-dreamy": "dreamy",
+    "scene-ethereal": "ethereal",
+    "scene-retro": "retro",
+    "scene-dirty": "dirty",
+    "scene-robotic": "robotic",
+    "scene-glitch": "glitch",
+    "scene-psychedelic": "psychedelic",
+    "scene-memory": "memory",
     "scene-test": "test"
   });
 
@@ -493,6 +503,238 @@
           setParam(trem, "frequency", 2);
           setParam(trem, "depth", 0.8);
           setParam(trem, "wet", 0.07, 2);
+        }
+      },
+      off: () => resetAllEffects()
+    },
+    empty: {
+      on: () => {
+        console.log("[Scene] 切换到: 空旷感 (Empty)");
+
+        setRate(0.995, 5);
+
+        const eq = MusicFXModule.getEffect("eq3");
+        if (eq) {
+          setParam(eq, "mid", -7, 1); // 挖空中频
+        }
+
+        const delay = MusicFXModule.getEffect("feedbackDelay");
+        if (delay) {
+          setParam(delay, "delayTime", "2n");
+          setParam(delay, "feedback", 0.2);
+          setParam(delay, "wet", 0.15, 1);
+        }
+
+        const rev = MusicFXModule.getEffect("jcReverb");
+        if (rev) {
+          setParam(rev, "roomSize", 0.8);
+          setParam(rev, "wet", 0.1, 1);
+        }
+      },
+      off: () => resetAllEffects()
+    },
+    underwater: {
+      on: () => {
+        console.log("[Scene] 切换到: 水下感 (Underwater)");
+
+        setRate(0.985, 5);
+
+        const eq = MusicFXModule.getEffect("eq3");
+        if (eq) {
+          setParam(eq, "high", -40, 2);
+          setParam(eq, "mid", -15, 2); // 极闷
+        }
+
+        const trem = MusicFXModule.getEffect("tremolo");
+        if (trem) {
+          setParam(trem, "frequency", 0.5);
+          setParam(trem, "depth", 0.5);
+          setParam(trem, "wet", 0.3, 2); // 水流感
+        }
+
+        const rev = MusicFXModule.getEffect("jcReverb");
+        if (rev) {
+          setParam(rev, "roomSize", 0.4);
+          setParam(rev, "wet", 0.2, 2);
+        }
+      },
+      off: () => resetAllEffects()
+    },
+    dreamy: {
+      on: () => {
+        console.log("[Scene] 切换到: 梦幻感 (Dreamy)");
+
+        setRate(0.99, 5);
+
+        const chorus = MusicFXModule.getEffect("chorus");
+        if (chorus) {
+          setParam(chorus, "frequency", 0.3);
+          setParam(chorus, "depth", 1);
+          setParam(chorus, "wet", 0.3, 3);
+        }
+
+        const rev = MusicFXModule.getEffect("jcReverb");
+        if (rev) {
+          setParam(rev, "roomSize", 0.7);
+          setParam(rev, "wet", 0.2, 3);
+        }
+      },
+      off: () => resetAllEffects()
+    },
+    ethereal: {
+      on: () => {
+        console.log("[Scene] 切换到: 缥缈感 (Ethereal)");
+
+        setRate(0.985, 5);
+
+        const eq = MusicFXModule.getEffect("eq3");
+        if (eq) {
+          setParam(eq, "high", 1, 3);
+          setParam(eq, "low", -15, 3);
+        }
+
+        const rev = MusicFXModule.getEffect("jcReverb");
+        if (rev) {
+          setParam(rev, "roomSize", 0.9);
+          setParam(rev, "wet", 0.05, 3); // 极湿
+        }
+
+        const wide = MusicFXModule.getEffect("stereoWidener");
+        if (wide) {
+          setParam(wide, "width", 1.0);
+          setParam(wide, "wet", 0.2, 3);
+        }
+      },
+      off: () => resetAllEffects()
+    },
+    retro: {
+      on: () => {
+        console.log("[Scene] 切换到: 复古未来 (Retro)");
+
+        setRate(1.0, 1);
+
+        const chorus = MusicFXModule.getEffect("chorus");
+        if (chorus) {
+          setParam(chorus, "frequency", 2);
+          setParam(chorus, "depth", 0.5);
+          setParam(chorus, "wet", 0.5, 1);
+        }
+
+        const delay = MusicFXModule.getEffect("feedbackDelay");
+        if (delay) {
+          setParam(delay, "delayTime", "8n.");
+          setParam(delay, "feedback", 0.4);
+          setParam(delay, "wet", 0.2, 1);
+        }
+      },
+      off: () => resetAllEffects()
+    },
+    dirty: {
+      on: () => {
+        console.log("[Scene] 切换到: 肮脏工业 (Dirty)");
+
+        setRate(1.0, 0.5);
+
+        const dist = MusicFXModule.getEffect("distortion");
+        if (dist) {
+          setParam(dist, "distortion", 0.6);
+          setParam(dist, "wet", 0.1, 0.5);
+        }
+
+        const bit = MusicFXModule.getEffect("bitCrusher");
+        if (bit) {
+          setParam(bit, "bits", 8);
+          setParam(bit, "wet", 0.15, 0.5);
+        }
+
+        const eq = MusicFXModule.getEffect("eq3");
+        if (eq) {
+          setParam(eq, "high", -5, 0.5);
+        }
+      },
+      off: () => resetAllEffects()
+    },
+    robotic: {
+      on: () => {
+        console.log("[Scene] 切换到: 机械断续 (Robotic)");
+
+        setRate(1.0, 1);
+
+        const bit = MusicFXModule.getEffect("bitCrusher");
+        if (bit) {
+          setParam(bit, "bits", 8);
+          setParam(bit, "wet", 0.15, 0.2);
+        }
+
+        const trem = MusicFXModule.getEffect("tremolo");
+        if (trem) {
+          setParam(trem, "frequency", 10);
+          setParam(trem, "type", "sine");
+          setParam(trem, "depth", 1.0);
+          setParam(trem, "wet", 0.2, 0.2);
+        }
+      },
+      off: () => resetAllEffects()
+    },
+    glitch: {
+      on: () => {
+        console.log("[Scene] 切换到: 故障感 (Glitch)");
+
+        setRate(1.02, 5);
+
+        const pan = MusicFXModule.getEffect("autoPanner");
+        if (pan) {
+          setParam(pan, "frequency", 50);
+          setParam(pan, "depth", 1);
+          setParam(pan, "wet", 0.3, 0.1);
+        }
+
+        const bit = MusicFXModule.getEffect("bitCrusher");
+        if (bit) {
+          setParam(bit, "bits", 6);
+          setParam(bit, "wet", 0.2, 0.1);
+        }
+      },
+      off: () => resetAllEffects()
+    },
+    psychedelic: {
+      on: () => {
+        console.log("[Scene] 切换到: 迷幻感 (Psychedelic)");
+
+        setRate(0.99, 5);
+
+        const pan = MusicFXModule.getEffect("autoPanner");
+        if (pan) {
+          setParam(pan, "frequency", 0.5);
+          setParam(pan, "depth", 1);
+          setParam(pan, "wet", 0.5, 2);
+        }
+
+        const chorus = MusicFXModule.getEffect("chorus");
+        if (chorus) {
+          setParam(chorus, "frequency", 0.2);
+          setParam(chorus, "depth", 1);
+          setParam(chorus, "wet", 0.7, 2);
+        }
+      },
+      off: () => resetAllEffects()
+    },
+    memory: {
+      on: () => {
+        console.log("[Scene] 切换到: 内心独白 (Memory)");
+
+        setRate(0.985, 5);
+
+        const rev = MusicFXModule.getEffect("jcReverb");
+        if (rev) {
+          setParam(rev, "roomSize", 0.6);
+          setParam(rev, "wet", 0.1, 3);
+        }
+
+        const eq = MusicFXModule.getEffect("eq3");
+        if (eq) {
+          setParam(eq, "high", -7, 3);
+          setParam(eq, "mid", 3, 3);
         }
       },
       off: () => resetAllEffects()
