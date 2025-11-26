@@ -1,0 +1,33 @@
+# 构建目录
+build/
+cmake-build-*/
+third_party/
+
+# 编译产物
+*.exe
+*.o
+*.obj
+*.a
+*.lib
+*.dll
+*.so
+*.dylib
+
+# IDE 文件
+.vs/
+.vscode/
+.idea/
+*.sln
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+
+# CMake 缓存
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+
+# 日志文件
+*.log
+
