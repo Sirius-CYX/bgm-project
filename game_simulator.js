@@ -12,13 +12,31 @@
   let ws = null;
   let isConnected = false;
 
-  // 状态标签映射
+  // 状态标签映射（与 rules_engine2.js 中的场景键保持一致）
   const STATE_LABELS = {
     reset: "🌲 正常探索 (Reset)",
-    epic: "⚔️ 激烈战斗 (Epic)",
-    anxiety: "❤️ 生命垂危 (Anxiety)",
-    lofi: "📜 回忆杀 (Lo-Fi)",
-    claustro: "🕳️ 钻入地道 (Claustro)"
+    epic: "⚔️ 史诗篇章 (Epic)",
+    lofi: "📜 尘封的回忆 (Lo-Fi)",
+    claustro: "🕳️ 幽闭地道 (Claustro)",
+    anxiety: "❤️ 焦虑紧张 (Anxiety)",
+    heroic: "🛡️ 英雄时刻 (Heroic)",
+    warmth: "🔥 温暖氛围 (Warmth)",
+    intimacy: "🤝 亲密贴耳 (Intimacy)",
+    cold: "❄️ 冰冷数字感 (Cold)",
+    panic: "⚠️ 恐慌眩晕 (Panic)",
+    suspense: "⏳ 悬疑诡异 (Suspense)",
+    horror: "👁️ 恐怖压迫 (Horror)",
+    empty: "🏜️ 空旷冷清 (Empty)",
+    underwater: "🌊 水下闷响 (Underwater)",
+    dreamy: "💤 梦幻模糊 (Dreamy)",
+    ethereal: "✨ 缥缈神圣 (Ethereal)",
+    retro: "📼 复古未来 80s (Retro)",
+    dirty: "⚙️ 肮脏工业 (Dirty)",
+    robotic: "🤖 机械断续 (Robotic)",
+    glitch: "📡 故障接触 (Glitch)",
+    psychedelic: "🌀 迷幻晕眩 (Psychedelic)",
+    memory: "📝 内心独白 (Memory)",
+    test: "🧪 测试场景 (Test)"
   };
 
   // 连接 WebSocket 服务器

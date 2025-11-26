@@ -31,12 +31,31 @@ struct GameState {
 };
 
 // 全局状态池
+// 权重越大，被抽中的概率越高
 const std::vector<GameState> GAME_STATES = {
-    { "reset",    50, "Normal Exploration (Reset)" },
-    { "epic",     15, "Intense Battle (Epic)" },
-    { "anxiety",  15, "Critical Health (Anxiety)" },
-    { "lofi",     10, "Flashback Scene (Lo-Fi)" },
-    { "claustro", 10, "Crawlspace (Claustro)" }
+    { "reset",       25, "Normal Exploration (Reset)" },
+    { "epic",        10, "Epic Battle" },
+    { "lofi",         8, "Lo-Fi / Flashback" },
+    { "claustro",     7, "Claustrophobic" },
+    { "anxiety",      8, "Anxiety" },
+    { "heroic",       7, "Heroic Moment" },
+    { "warmth",       7, "Warmth" },
+    { "intimacy",     6, "Intimacy" },
+    { "cold",         6, "Cold / Digital" },
+    { "panic",        5, "Panic" },
+    { "suspense",     5, "Suspense" },
+    { "horror",       4, "Horror" },
+    { "empty",        5, "Empty / Distant" },
+    { "underwater",   4, "Underwater" },
+    { "dreamy",       5, "Dreamy" },
+    { "ethereal",     5, "Ethereal" },
+    { "retro",        6, "Retro 80s" },
+    { "dirty",        4, "Dirty / Industrial" },
+    { "robotic",      4, "Robotic" },
+    { "glitch",       3, "Glitch" },
+    { "psychedelic",  4, "Psychedelic" },
+    { "memory",       4, "Inner Monologue" }
+    
 };
 
 // 加权随机选择器
