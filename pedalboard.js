@@ -28,6 +28,8 @@ const MusicFXModule = (function() {
     eq3: null,
     bitCrusher: null,
     distortion: null,
+    highpass: null,
+    lowpass: null,
     tremolo: null,
     vibrato: null,
     chorus: null,
@@ -43,13 +45,15 @@ const MusicFXModule = (function() {
     "eq3",            // 2. 音色雕刻
     "bitCrusher",     // 3. 数字破碎
     "distortion",     // 4. 失真
-    "tremolo",        // 5. 音量切片
-    "vibrato",        // 6. 音高颤动
-    "chorus",         // 7. 调制叠加
-    "feedbackDelay",  // 8. 回声
-    "autoPanner",     // 9. 左右移动
-    "stereoWidener",  // 10. 立体声加宽
-    "jcReverb"        // 11. 混响空间
+    "highpass",       // 5. 高通滤波器
+    "lowpass",        // 6. 低通滤波器
+    "tremolo",        // 7. 音量切片
+    "vibrato",        // 8. 音高颤动
+    "chorus",         // 9. 调制叠加
+    "feedbackDelay",  // 10. 回声
+    "autoPanner",     // 11. 左右移动
+    "stereoWidener",  // 12. 立体声加宽
+    "jcReverb"        // 13. 混响空间
   ];
   
   let _player = null;
@@ -94,21 +98,39 @@ const MusicFXModule = (function() {
       wet: 0  // 默认关闭
     });
     
-    // 5. Tremolo (音量切片) - 需要启动
+    // 5. Highpass (高通滤波器)
+    // 默认 10Hz = 全开，不阻挡任何声音
+    _allEffects.highpass = new Tone.Filter({
+      type: "highpass",
+      frequency: 10,
+      rolloff: -12,
+      Q: 1
+    });
+    
+    // 6. Lowpass (低通滤波器)
+    // 默认 20000Hz = 全开，不阻挡任何声音
+    _allEffects.lowpass = new Tone.Filter({
+      type: "lowpass",
+      frequency: 20000,
+      rolloff: -12,
+      Q: 1
+    });
+    
+    // 7. Tremolo (音量切片) - 需要启动
     _allEffects.tremolo = new Tone.Tremolo({
       frequency: 10,
       depth: 0.5,
       wet: 0
     }).start();
     
-    // 6. Vibrato (音高颤动)
+    // 8. Vibrato (音高颤动)
     _allEffects.vibrato = new Tone.Vibrato({
       frequency: 5,
       depth: 0.1,
       wet: 0
     });
     
-    // 7. Chorus (合唱)
+    // 9. Chorus (合唱)
     _allEffects.chorus = new Tone.Chorus({ 
       frequency: 10,//摇摆频率
       delayTime: 0.1,
@@ -117,27 +139,27 @@ const MusicFXModule = (function() {
       wet: 0  // 默认关闭
     });
     
-    // 8. FeedbackDelay (延迟)
+    // 10. FeedbackDelay (延迟)
     _allEffects.feedbackDelay = new Tone.FeedbackDelay({
       delayTime: "8n",  // 延迟时间（8分音符）
       feedback: 0.2,    // 反馈量
       wet: 0  // 默认关闭
     });
     
-    // 9. AutoPanner (左右声相) - 需要启动
+    // 11. AutoPanner (左右声相) - 需要启动
     _allEffects.autoPanner = new Tone.AutoPanner({
       frequency: 1,
       depth: 1,
       wet: 0
     }).start();
     
-    // 10. StereoWidener (立体声宽度)
+    // 12. StereoWidener (立体声宽度)
     _allEffects.stereoWidener = new Tone.StereoWidener({
       width: 0.5,
       wet: 0
     });
     
-    // 11. JCReverb (混响)
+    // 13. JCReverb (混响)
     _allEffects.jcReverb = new Tone.JCReverb({ 
       roomSize: 0.3,  // 房间大小
       wet: 0  // 默认关闭
