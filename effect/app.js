@@ -47,7 +47,7 @@ audioUpload.addEventListener("change", async (event) => {
   if (!file) return;
   
   try {
-    statusText.textContent = "正在加载音乐文件...";
+    statusText.textContent = "Loading audio file...";
     
     // *** 清理旧播放器和 Transport ***
     if (player) {
@@ -73,23 +73,23 @@ audioUpload.addEventListener("change", async (event) => {
     // 初始化效果链系统（会在内部连接 player 到 effectChain）
     initializeEffectChain();
     
-    statusText.textContent = `音乐加载成功！文件：${file.name}`;
+    statusText.textContent = `Audio loaded successfully! File: ${file.name}`;
     console.log("音乐文件加载完成，可以播放和添加效果了");
     
     // *** 重置播放按钮状态 ***
     isPlaying = false;
-    playButton.textContent = "播放";
+    playButton.textContent = "Play";
     
   } catch (error) {
     console.error("音频加载失败:", error);
-    statusText.textContent = "音频加载失败，请检查文件格式";
+    statusText.textContent = "Failed to load audio, please check file format";
   }
 });
 
 // 播放控制 (已修复为"暂停/继续")
 playButton.addEventListener("click", () => {
   if (!player) {
-    statusText.textContent = "请先上传音乐文件";
+    statusText.textContent = "Please upload an audio file first";
     return;
   }
   
@@ -98,15 +98,15 @@ playButton.addEventListener("click", () => {
     // 如果正在播放，就"暂停"
     Tone.Transport.pause();
     
-    statusText.textContent = "已暂停";
-    playButton.textContent = "播放";
+    statusText.textContent = "Paused";
+    playButton.textContent = "Play";
     isPlaying = false;
   } else {
     // 如果是"已停止"或"已暂停"，就"开始/继续"
     Tone.Transport.start();
     
-    statusText.textContent = "正在播放...";
-    playButton.textContent = "暂停";
+    statusText.textContent = "Playing...";
+    playButton.textContent = "Pause";
     isPlaying = true;
   }
 });
@@ -117,8 +117,8 @@ stopButton.addEventListener("click", () => {
     // .stop() 会停止播放并重置 Transport 的时间到 0
     Tone.Transport.stop();
     
-    statusText.textContent = "已停止";
-    playButton.textContent = "播放"; // 重置播放按钮的状态
+    statusText.textContent = "Stopped";
+    playButton.textContent = "Play"; // 重置播放按钮的状态
     isPlaying = false;
   }
 });
@@ -136,14 +136,14 @@ function initializeEffectChain() {
   
   // 创建所有效果节点
   effectNodes.reverb = new Tone.JCReverb({
-    roomSize: 0.3,//空间大小
-    wet: 0.2,
+    roomSize: 0.4,//空间大小
+    wet: 0.35,//增强混响明显度
   });
   
   effectNodes.delay = new Tone.FeedbackDelay({
     delayTime: "8n",//延迟时间（8音符的话回声和原声对齐）
-    feedback: 0.2,//回声重复多少次
-    wet: 0.3,
+    feedback: 0.35,//回声重复次数，增强明显度
+    wet: 0.45,//增强延迟明显度
   });
   
   effectNodes.chorus = new Tone.Chorus({
@@ -151,41 +151,42 @@ function initializeEffectChain() {
     delayTime: 0.1,
     depth: 0.9,
     spread: 180,//立体声扩散
+    wet: 0.55,//增强合唱效果明显度
   });
   
   effectNodes.distortion = new Tone.Distortion({
-    distortion: 0.4,//失真量
+    distortion: 0.45,//失真量，略微增加
     //saturate: 0.5,
-    wet: 0.25,
+    wet: 0.45,//增强失真明显度
   });
 
   // 相位器（Phaser）：营造旋涡感的扫频声
   effectNodes.phaser = new Tone.Phaser({
-    frequency: 0.5,//扫频速度较慢
+    frequency: 0.6,//扫频速度，略微加快
     octaves: 3,//扫频深度
     baseFrequency: 350,
-    wet: 0.4,//混合度 40%
+    wet: 0.55,//增强相位器明显度
   });
 
   // 自动哇音（AutoWah）：模拟哇踏板的人声效果
   effectNodes.autoWah = new Tone.AutoWah({
     baseFrequency: 100,//哇音起始频率
     octaves: 6,//滤波开启范围
-    Q: 2,//Q值控制尖锐程度
-    wet: 0.5,//混合度 50%
+    Q: 2.5,//Q值控制尖锐程度，略微增加
+    wet: 0.65,//增强自动哇音明显度
   });
 
   // 自动声相器（AutoPanner）：在左右声道间摆动
   effectNodes.autoPanner = new Tone.AutoPanner({
     frequency: "4m",//以四分音符速度左右摆动
-    depth: 0.8,//摆动幅度 80%
-    wet: 0.6,//声相效果建议保持 100%
+    depth: 0.85,//摆动幅度，略微增加
+    wet: 0.75,//增强自动声相器明显度
   }).start();//需要启动内部 LFO
 
   // 比特压碎器（BitCrusher）：制造低保真数字失真
   effectNodes.bitCrusher = new Tone.BitCrusher({
     bits: 4,//4-bit 颗粒感
-    wet: 0.2,//混合度 30%
+    wet: 0.35,//增强比特压碎器明显度
   });
   
   // 创建效果链路由节点：播放器 → effectChain(Gain) → 输出（初始为 dry 路径）
@@ -200,7 +201,7 @@ function initializeEffectChain() {
 // 实时切换音频效果
 function switchEffect(effectType) {
   if (!player || !effectChain) {
-    statusText.textContent = "请先上传音乐文件";
+    statusText.textContent = "Please upload an audio file first";
     return;
   }
   
@@ -225,8 +226,8 @@ function switchEffect(effectType) {
   currentEffect = targetEffect;
   
   // 更新状态显示
-  statusText.textContent = `已切换到${effectType.toUpperCase()}效果`;
-  console.log(`实时切换到${effectType}效果`);
+  statusText.textContent = `Switched to ${effectType.toUpperCase()} effect`;
+  console.log(`Switched to ${effectType} effect`);
 }
 
 // 效果按钮事件监听器 - 实时切换
@@ -265,7 +266,7 @@ bitCrusherButton.addEventListener("click", () => {
  // 清除效果按钮
  clearButton.addEventListener("click", () => {
   if (!player || !effectChain) {
-    statusText.textContent = "请先上传音乐文件";
+    statusText.textContent = "Please upload an audio file first";
     return;
   }
   
@@ -281,7 +282,7 @@ bitCrusherButton.addEventListener("click", () => {
   // 重新连接到输出（dry 路径，无效果，音量由 effectChain 的 Gain 值 0.85 控制）
   effectChain.toDestination();
   
-  statusText.textContent = "已清除所有效果，播放原始音频";
-  console.log("清除所有效果");
+  statusText.textContent = "All effects cleared, playing original audio";
+  console.log("All effects cleared");
 });
 

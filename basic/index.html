@@ -1,131 +1,204 @@
-<!DOCTYPE HTML>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-    <title>音频处理工具</title>
-    <style type="text/css">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DSP-Basic</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css" />
+    <style>
         body {
-            background: rgb(239, 236, 236);
-            line-height: 30px;
+            background: #0f1115;
+            color: #e5e9f0;
+            font-family: "Inter", "Segoe UI", sans-serif;
+            padding: 24px;
+            line-height: 1.5;
         }
-
-        input, button {
-            display:block;
+        h1 {
+            margin-top: 0;
+            color: #88c0d0;
+            letter-spacing: 0.5px;
         }
-        .progress,
+        .panel {
+            background: #1a1d24;
+            border: 1px solid #2e3440;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 20px;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+        }
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        .controls button {
+            background: #2d3442;
+            color: #e5e9f0;
+            border: 1px solid #3b4252;
+            padding: 10px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-size: 14px;
+        }
+        .controls button:hover:not(:disabled) {
+            background: #3b4252;
+        }
+        .controls button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        input[type="file"] {
+            display: none;
+        }
+        input[type="file"] + label {
+            background: #2d3442;
+            color: #e5e9f0;
+            border: 1px solid #3b4252;
+            padding: 10px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: inline-block;
+            font-size: 14px;
+        }
+        input[type="file"] + label:hover {
+            background: #3b4252;
+        }
+        .progress-container {
+            margin-top: 12px;
+        }
+        .progress-time {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: #8fbcbb;
+        }
         #progressMeter {
-            width: 400px;
+            width: 100%;
+            height: 8px;
+            background: #2e3440;
+            border-radius: 4px;
+            overflow: hidden;
+            cursor: pointer;
         }
-
-        .progress #duration {
-            position: relative;
-            float: right;
+        #progressMeter::-webkit-progress-bar {
+            background: #2e3440;
+        }
+        #progressMeter::-webkit-progress-value {
+            background: linear-gradient(90deg, #88c0d0, #a3be8c);
+            transition: width 0.1s;
+        }
+        #progressMeter::-moz-progress-bar {
+            background: linear-gradient(90deg, #88c0d0, #a3be8c);
+        }
+        .sliders-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .slider-row {
+            display: grid;
+            grid-template-columns: 140px 1fr 100px;
+            gap: 16px;
+            align-items: center;
+            margin: 16px 0;
+        }
+        .slider-row label {
+            color: #e5e9f0;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            background: #2e3440;
+            border-radius: 3px;
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            background: #88c0d0;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: background 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        input[type="range"]::-webkit-slider-thumb:hover {
+            background: #a3be8c;
+        }
+        input[type="range"]::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            background: #88c0d0;
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+            transition: background 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        input[type="range"]::-moz-range-thumb:hover {
+            background: #a3be8c;
+        }
+        .slider-value {
+            color: #8fbcbb;
+            font-size: 14px;
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+        }
+        .status-text {
+            color: #8fbcbb;
+            font-size: 14px;
+            margin-left: auto;
         }
     </style>
 </head>
 <body>
-<button id="play" disabled>播放</button>
-<input type="file" id="fileInput" accept=".mp3,.wav" style="margin-bottom: 20px;">
-<div class="progress">
-    <div>
-        <span id="currentTime">0:00</span><span id="duration"></span>
+    <h1>DSP-Basic</h1>
+    
+    <div class="panel">
+        <div class="controls">
+            <input type="file" id="fileInput" accept="audio/*,.mp3,.wav,.ogg,.flac,.m4a,.aac,.opus,.webm" />
+            <label for="fileInput">Upload Audio</label>
+            <button id="play" disabled>Play</button>
+            <span class="status-text" id="statusText">Waiting for file...</span>
+        </div>
+        <div class="progress-container">
+            <div class="progress-time">
+                <span id="currentTime">0:00</span>
+                <span id="duration">0:00</span>
+            </div>
+            <progress id="progressMeter" value="0" max="100"></progress>
+        </div>
     </div>
-    <progress id="progressMeter" value="0" max="100"></progress>
-</div>
-速度: <input type="range" autofocus="true" min="0.1" max="4.0" name="tempoSlider" value="1.0" id="tempoSlider" step="0.01" list="temporange">
-<datalist id="temporange">
-    <option value="0.1" label="0">
-    <option value="0.5">
-    <option value="1.0">
-    <option value="1.5">
-    <option value="2.0">
-    <option value="2.5">
-    <option value="3.0">
-    <option value="3.5">
-    <option value="4.0" label="4">
-</datalist>
-<div id="tempo"></div>
-音高: <input type="range" autofocus="true" min="0.1" max="2.0" name="pitchSlider" value="1.0" id="pitchSlider" step="0.01" list="pitchrange">
-<datalist id="pitchrange">
-    <option value="0.1" label="0">
-    <option value="0.5">
-    <option value="1.0">
-    <option value="1.5">
-    <option value="2.0" label="2">
-</datalist>
-<div id="pitch"></div>
-变调: <input type="range" autofocus="true" min="-7.0" max="7.0" name="keySlider" value="0" id="keySlider" step="1" list="keyrange" />
-<datalist id="keyrange">
-    <option value="-7">
-    <option value="-6">
-    <option value="-5">
-    <option value="-4">
-    <option value="-3">
-    <option value="-2">
-    <option value="-1">
-    <option value="0">
-    <option value="1">
-    <option value="2">
-    <option value="3">
-    <option value="4">
-    <option value="5">
-    <option value="6">
-    <option value="7">
-</datalist>
-<div id="key"></div>
-回声: <input type="range" autofocus="true" min="0" max="1" value="0" step="0.1" id="echoSlider" list="echorange">
-<datalist id="echorange">
-    <option value="0" label="0">
-    <option value="0.25">
-    <option value="0.5">
-    <option value="0.75">
-    <option value="1" label="1">
-</datalist>
-<div id="echoValue">0</div>
-<!-- 添加混响控制 -->
-混响: <input type="range" autofocus="true" min="0" max="1" value="0" step="0.1" id="reverbSlider" list="reverbrange">
-<datalist id="reverbrange">
-    <option value="0" label="0">
-    <option value="0.25">
-    <option value="0.5">
-    <option value="0.75">
-    <option value="1" label="1">
-</datalist>
-<div id="reverbValue">0</div>
-<!-- 添加空间环绕控制 -->
-空间环绕: <input type="range" autofocus="true" min="-1" max="1" value="0" step="0.1" id="panSlider" list="panrange">
-<datalist id="panrange">
-    <option value="-1" label="左">
-    <option value="-0.5">
-    <option value="0" label="中">
-    <option value="0.5">
-    <option value="1" label="右">
-</datalist>
-<div id="panValue">0</div>
-音量: <input type="range" autofocus="true" min="0.0" max="10.0" name="volumeSlider" value="1.0" id="volumeSlider" step="0.01" list="volumerange">
-<datalist id="volumerange">
-    <option value="0.0" label="0">
-    <option value="0.5">
-    <option value="1.0">
-    <option value="1.5">
-    <option value="2.0" label="2">
-    <option value="2.5">
-    <option value="3.0">
-    <option value="3.5">
-    <option value="4.0" label="4">
-    <option value="4.5">
-    <option value="5.0">
-    <option value="5.5">
-    <option value="6.0" label="6">
-    <option value="6.5">
-    <option value="7.0">
-    <option value="7.5">
-    <option value="8.0" label="8">
-    <option value="8.5">
-    <option value="9.0">
-    <option value="9.5">
-    <option value="10.0" label="10">
-</datalist>
-<div id="volume"></div>
-<script type="module" src="example.js"></script>
+
+    <div class="panel">
+        <div class="sliders-container">
+            <div class="slider-row">
+                <label for="volumeSlider">Volume</label>
+                <input type="range" min="0.0" max="1.5" value="1.0" step="0.001" id="volumeSlider" />
+                <span class="slider-value" id="volume">1.000</span>
+            </div>
+            <div class="slider-row">
+                <label for="tempoSlider">Tempo</label>
+                <input type="range" min="0.8" max="1.2" value="1.0" step="0.001" id="tempoSlider" />
+                <span class="slider-value" id="tempo">1.000</span>
+            </div>
+            <div class="slider-row">
+                <label for="pitchSlider">Pitch</label>
+                <input type="range" min="0.794" max="1.260" value="1.0" step="0.001" id="pitchSlider" />
+                <span class="slider-value" id="pitch">1.000</span>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="example.js"></script>
 </body>
 </html>

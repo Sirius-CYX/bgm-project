@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DSP DEMO - 3D Controls</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+  <style>
+    body {
+      background: #0f1115;
+      color: #e5e9f0;
+      font-family: "Inter", "Segoe UI", sans-serif;
+      padding: 24px;
+      line-height: 1.5;
+    }
+    h1 {
+      margin-top: 0;
+      color: #88c0d0;
+      letter-spacing: 0.5px;
+    }
+    .panel {
+      background: #1a1d24;
+      border: 1px solid #2e3440;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 20px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+    }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+    }
+    .controls button, .controls input[type="file"] + label {
+      background: #2d3442;
+      color: #e5e9f0;
+      border: 1px solid #3b4252;
+      padding: 10px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .controls button:hover, .controls input[type="file"] + label:hover {
+      background: #3b4252;
+    }
+    .slider-row {
+      display: grid;
+      grid-template-columns: 140px 1fr 80px;
+      gap: 12px;
+      align-items: center;
+      margin: 12px 0;
+    }
+    input[type="range"] {
+      width: 100%;
+    }
+    .viz {
+      display: flex;
+      gap: 12px;
+      margin-top: 8px;
+    }
+    .bar {
+      flex: 1;
+      height: 12px;
+      background: #2e3440;
+      border-radius: 6px;
+      position: relative;
+      overflow: hidden;
+    }
+    .bar span {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      background: linear-gradient(90deg, #88c0d0, #a3be8c);
+      width: 50%;
+      transition: width 0.15s ease;
+    }
+    .note {
+      color: #8fbcbb;
+      font-size: 14px;
+    }
+    input[type="file"] {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>DSP DEMO (3D Axes)</h1>
+  <div class="panel">
+    <div class="controls">
+      <input type="file" id="file-input" accept="audio/*" />
+      <label for="file-input">Upload Audio</label>
+      <button id="play-btn">Play / Pause</button>
+      <button id="stop-btn">Stop</button>
+      <span id="status-text">Waiting for file...</span>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3>3D Axes Controls</h3>
+    <div class="slider-row">
+      <label for="slider-x">X · Width / Panorama</label>
+      <input id="slider-x" type="range" min="0" max="2" step="0.01" value="1" />
+      <span id="val-x">1.00</span>
+    </div>
+    <div class="slider-row">
+      <label for="slider-y">Y · Height / Spectrum</label>
+      <input id="slider-y" type="range" min="0" max="1" step="0.01" value="0.5" />
+      <span id="val-y">0.50</span>
+    </div>
+    <div class="slider-row">
+      <label for="slider-z">Z · Depth / Distance</label>
+      <input id="slider-z" type="range" min="0" max="1" step="0.01" value="0" />
+      <span id="val-z">0.00</span>
+    </div>
+    <div class="viz">
+      <div class="bar"><span id="bar-x" style="width:50%"></span></div>
+      <div class="bar"><span id="bar-y" style="width:50%"></span></div>
+      <div class="bar"><span id="bar-z" style="width:0%"></span></div>
+    </div>
+    <p class="note">X: Stereo width · Y: EQ smile/phone curve · Z: Reverb distance</p>
+  </div>
+
+  <script src="demo_3d.js"></script>
+</body>
+</html>
+

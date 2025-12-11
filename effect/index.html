@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Sound Effects Lab</title>
+    <title>EffectDEMO</title>
     <script
       src="https://cdnjs.cloudflare.com/ajax/libs/tone/15.1.2/Tone.js"
       integrity="sha512-VbxZhFFmDVpPg5CAmDiLkhTizVdeYBstbyXcF5l4Xmweku4+r8Ao9nsbFwHXf9MO298TeMdq5Uj6vwKM9FEPbA=="
@@ -14,16 +14,16 @@
   </head>
   <body>
     <div class="title">
-      <h1>SOUND EFFECT</h1>
+      <h1>EFFECT DEMO</h1>
     </div>
     <div class="upload-section">
       <input type="file" id="audioUpload" accept="audio/*" style="display: none;" />
-      <label for="audioUpload" class="btn upload-btn">选择音乐文件</label>
-      <button id="play" class="btn">播放</button>
-      <button id="stop" class="btn">停止</button>
+      <label for="audioUpload" class="btn upload-btn">Upload Audio</label>
+      <button id="play" class="btn">Play</button>
+      <button id="stop" class="btn">Stop</button>
     </div>
     <div id="container">
-      <span id="status">请先上传音乐文件</span>
+      <span id="status">Please upload an audio file</span>
     </div>
     <div class="effects">
       <button class="effect-box" id="reverb">REVERB</button>
